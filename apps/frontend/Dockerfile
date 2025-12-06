@@ -30,12 +30,8 @@ FROM node:20-slim AS production
 WORKDIR /app
 
 # Copy the built SvelteKit app (adapter-node output)
+# Note: adapter-node produces a self-contained bundle with no runtime dependencies
 COPY --from=builder /app/apps/frontend/build ./build
-COPY --from=builder /app/apps/frontend/package.json ./
-
-# Install only production dependencies for the Node adapter
-RUN corepack enable && corepack prepare pnpm@latest --activate
-RUN pnpm install --prod --ignore-scripts
 
 ENV NODE_ENV=production
 ENV PORT=3000
