@@ -7,12 +7,6 @@ import * as songRepo from '../../repositories/songRepository.js';
 import adminSongRoutes from './songs.js';
 import type { JwtPayload } from '@bearded-nemesis/shared';
 
-declare module 'fastify' {
-  interface FastifyInstance {
-    authenticate: any;
-  }
-}
-
 declare module '@fastify/jwt' {
   interface FastifyJWT {
     payload: JwtPayload;

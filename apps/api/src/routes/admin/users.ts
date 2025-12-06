@@ -82,7 +82,13 @@ const adminUserRoutes: FastifyPluginAsync = async (app) => {
     const { id } = userIdSchema.parse(request.params);
     const body = updateUserSchema.parse(request.body);
 
-    const user = await userRepo.update(id, body);
+    // Convert null to undefined for xboxGamertag (zod nullable vs repository type)
+    const updateData = {
+      ...body,
+      xboxGamertag: body.xboxGamertag === null ? undefined : body.xboxGamertag,
+    };
+
+    const user = await userRepo.update(id, updateData);
 
     if (!user) {
       return reply.status(404).send({ error: 'User not found' });

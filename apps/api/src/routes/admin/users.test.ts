@@ -6,12 +6,6 @@ import * as userRepo from '../../repositories/userRepository.js';
 import adminUserRoutes from './users.js';
 import type { JwtPayload } from '@bearded-nemesis/shared';
 
-declare module 'fastify' {
-  interface FastifyInstance {
-    authenticate: any;
-  }
-}
-
 declare module '@fastify/jwt' {
   interface FastifyJWT {
     payload: JwtPayload;

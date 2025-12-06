@@ -15,7 +15,13 @@
       "Bash(pnpm migrate:*)",
       "Bash(pnpm db:migrate:*)",
       "Bash(pnpm build:*)",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh run view:*)",
+      "Bash(docker build:*)",
+      "Bash(pnpm --filter @bearded-nemesis/api build:*)",
+      "Bash(pnpm --filter @bearded-nemesis/api test:*)"
     ],
     "deny": [],
     "ask": []
