@@ -1,0 +1,41 @@
+{
+  "name": "@bearded-nemesis/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint src/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:seed": "tsx src/db/seed.ts",
+    "db:import-songs": "tsx src/db/import-songs.ts"
+  },
+  "dependencies": {
+    "@bearded-nemesis/shared": "workspace:*",
+    "@fastify/cors": "^9.0.0",
+    "@fastify/jwt": "^8.0.0",
+    "@fastify/multipart": "^8.3.1",
+    "@fastify/static": "^7.0.4",
+    "@fastify/websocket": "^10.0.0",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
+    "fastify": "^4.26.0",
+    "pg": "^8.11.0",
+    "string-similarity": "^4.0.4",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^20.11.0",
+    "@types/pg": "^8.11.0",
+    "@types/string-similarity": "^4.0.2",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "bearded-nemesis",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Run dev in individual apps'",
+    "lint": "pnpm run --recursive lint",
+    "test": "pnpm run --recursive test",
+    "build": "pnpm run --recursive build"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}

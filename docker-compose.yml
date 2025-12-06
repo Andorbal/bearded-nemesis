@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: rockband
+      POSTGRES_PASSWORD: rockband
+      POSTGRES_DB: rockband
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rockband"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  solver:
+    build: ./apps/solver
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+    volumes:
+      - ./apps/solver/app:/app/app  # Hot reload
+      - ./screenshots:/screenshots
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_data:

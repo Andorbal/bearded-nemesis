@@ -1,0 +1,66 @@
+version: '3.8'
+
+# Claude Code sandbox that connects to the host's PostgreSQL and Solver services
+# Prerequisites: Start the root docker-compose.yml first (docker-compose up -d)
+
+services:
+  claude-sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TZ: ${TZ:-America/Los_Angeles}
+        CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-latest}
+        GIT_DELTA_VERSION: ${GIT_DELTA_VERSION:-0.18.2}
+        ZSH_IN_DOCKER_VERSION: ${ZSH_IN_DOCKER_VERSION:-1.2.0}
+
+    container_name: claude-sandbox
+
+    # Memory limit for PaddleOCR and other ML workloads
+    mem_limit: 3g
+    memswap_limit: 3g
+
+    # Required capabilities for iptables/firewall
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+    # Ensure host.docker.internal works on Linux (already works on macOS/Windows)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Mount the project workspace
+    volumes:
+      - ../:/workspace:delegated
+      - claude-bash-history:/commandhistory
+      - claude-config:/home/node/.claude
+      # Optional: Mount your git config for authentication
+      #- ~/.gitconfig:/home/node/.gitconfig:ro
+      #- ~/.ssh:/home/node/.ssh:ro
+
+    # Environment variables
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - CLAUDE_CONFIG_DIR=/home/node/.claude
+      - POWERLEVEL9K_DISABLE_GITSTATUS=true
+      # Optional: Only needed if using API-based auth (not Claude Max subscription)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      # Database connection - uses host's PostgreSQL on port 5434
+      - DATABASE_URL=postgresql://rockband:rockband@host.docker.internal:5434/rockband
+      # Solver service - uses host's Solver on port 8081
+      - SOLVER_URL=http://host.docker.internal:8081
+
+    # Set working directory
+    working_dir: /workspace
+
+    # Keep container running
+    stdin_open: true
+    tty: true
+
+    # Use firewall script that allows Docker service access
+    command: >
+      sh -c "sudo /usr/local/bin/init-firewall.sh && exec zsh"
+
+volumes:
+  claude-bash-history:
+  claude-config:
