@@ -137,4 +137,40 @@ describe('playthroughSongStatsRepository', () => {
     expect(updated?.rating).toBe(5);
     expect(updated?.score).toBe(100000);
   });
+
+  describe('getStatsForPlaythrough', () => {
+    it('returns all stats for playthrough grouped by song position', async () => {
+      const user1 = await userRepo.create({
+        username: 'player1',
+        passwordHash: 'pass',
+        displayName: 'Player 1'
+      });
+
+      const playthrough = await playthroughRepo.create({
+        setlistId: testSetlistId,
+        createdBy: user1.id
+      });
+
+      // Finish the playthrough
+      await playthroughRepo.finish(playthrough.id);
+
+      // Copy songs from setlist to playthrough
+      await playthroughSongRepo.copySongsFromSetlist(playthrough.id, testSetlistId);
+      const songs = await playthroughSongRepo.getSongs(playthrough.id);
+
+      // Create stats for the first song
+      await statsRepo.create({
+        playthroughSongId: songs[0].id,
+        userId: user1.id,
+        score: 100000,
+        rating: 5
+      });
+
+      const result = await statsRepo.getStatsForPlaythrough(playthrough.id);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].playthroughSongId).toBe(songs[0].id);
+      expect(result[0].score).toBe(100000);
+    });
+  });
 });

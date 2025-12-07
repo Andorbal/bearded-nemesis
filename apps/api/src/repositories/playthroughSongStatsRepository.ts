@@ -155,3 +155,67 @@ export async function findById(id: number): Promise<PlaythroughSongStats | null>
   );
   return row ? mapToStats(row) : null;
 }
+
+interface DbStatsWithUsername {
+  username: string;
+  score: number | null;
+  accuracy_pct: string | null;
+  notes_hit: number | null;
+  notes_missed: number | null;
+  longest_streak: number | null;
+  stars_earned: number | null;
+}
+
+export interface StatsWithUsername {
+  username: string;
+  score: number | null;
+  accuracyPct: number | null;
+  notesHit: number | null;
+  notesMissed: number | null;
+  longestStreak: number | null;
+  starsEarned: number | null;
+}
+
+/**
+ * Fetch stats for a playthrough song with usernames joined.
+ * Used for broadcasting OCR results via WebSocket.
+ */
+export async function getStatsWithUsernamesForPlaythroughSong(
+  playthroughSongId: number
+): Promise<StatsWithUsername[]> {
+  const rows = await query<DbStatsWithUsername>(
+    `SELECT u.username, s.score, s.accuracy_pct, s.notes_hit, s.notes_missed,
+            s.longest_streak, s.stars_earned
+     FROM playthrough_song_stats s
+     JOIN users u ON s.user_id = u.id
+     WHERE s.playthrough_song_id = $1
+     ORDER BY s.created_at`,
+    [playthroughSongId]
+  );
+
+  return rows.map(row => ({
+    username: row.username,
+    score: row.score,
+    accuracyPct: row.accuracy_pct ? parseFloat(row.accuracy_pct) : null,
+    notesHit: row.notes_hit,
+    notesMissed: row.notes_missed,
+    longestStreak: row.longest_streak,
+    starsEarned: row.stars_earned,
+  }));
+}
+
+/**
+ * Fetch all stats for a playthrough, ordered by song position and user.
+ * Used for the playthrough summary endpoint.
+ */
+export async function getStatsForPlaythrough(playthroughId: number): Promise<PlaythroughSongStats[]> {
+  const rows = await query<DbPlaythroughSongStats>(
+    `SELECT pss.*
+     FROM playthrough_song_stats pss
+     JOIN playthrough_songs ps ON pss.playthrough_song_id = ps.id
+     WHERE ps.playthrough_id = $1
+     ORDER BY ps.position, pss.user_id`,
+    [playthroughId]
+  );
+  return rows.map(mapToStats);
+}
