@@ -177,7 +177,9 @@ def _detect_gold_stars(img: np.ndarray) -> Tuple[bool, float]:
     ]
     confidence = np.mean(confidence_factors)
 
-    return is_gold, confidence
+    # Convert numpy types to Python native types for JSON serialization
+    # FastAPI/Pydantic cannot serialize numpy.bool_ or numpy.float64
+    return bool(is_gold), float(confidence)
 
 
 def analyze_star_colors(img: np.ndarray) -> dict:

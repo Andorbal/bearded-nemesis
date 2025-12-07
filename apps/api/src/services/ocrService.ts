@@ -6,6 +6,16 @@ import type { WsServerMessage, OcrStatus } from '@bearded-nemesis/shared';
 
 const SOLVER_URL = process.env.SOLVER_URL || 'http://solver:8081';
 
+/**
+ * Convert host screenshot path to container path for Solver.
+ * Host: ../../screenshots/file.jpg -> Container: /screenshots/file.jpg
+ */
+function toContainerPath(hostPath: string): string {
+  // Extract just the filename from the path
+  const filename = hostPath.split('/').pop() || '';
+  return `/screenshots/${filename}`;
+}
+
 interface OcrPlayerStats {
   gamertag: string;
   accuracy_pct?: number;
@@ -27,30 +37,86 @@ interface OcrResponse {
   raw_text?: string;
 }
 
+interface OcrJobSubmitResponse {
+  job_id: string;
+  status: string;
+}
+
+interface OcrJobStatusResponse {
+  job_id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  image_path: string;
+  result: OcrResponse | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
 /**
- * Call the Python solver OCR endpoint.
+ * Submit an OCR job to the Python solver.
  *
- * @param imagePath - Path to the screenshot image
- * @returns OCR response or null if request failed
+ * @param imagePath - Path to the screenshot image (host path)
+ * @returns Job ID or null if request failed
  */
-async function callOcrEndpoint(imagePath: string): Promise<OcrResponse | null> {
+async function submitOcrJob(imagePath: string): Promise<string | null> {
   try {
+    const containerPath = toContainerPath(imagePath);
     const response = await fetch(`${SOLVER_URL}/ocr`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image_path: imagePath }),
+      body: JSON.stringify({ image_path: containerPath }),
     });
 
     if (!response.ok) {
-      console.error(`OCR request failed: ${response.status} ${response.statusText}`);
+      console.error(`OCR job submission failed: ${response.status} ${response.statusText}`);
       return null;
     }
 
-    return (await response.json()) as OcrResponse;
+    const result = (await response.json()) as OcrJobSubmitResponse;
+    return result.job_id;
   } catch (error) {
-    console.error('OCR request error:', error);
+    console.error('OCR job submission error:', error);
     return null;
   }
+}
+
+/**
+ * Poll for OCR job completion.
+ *
+ * @param jobId - The OCR job ID
+ * @param maxAttempts - Maximum number of polling attempts (default: 60)
+ * @param intervalMs - Polling interval in milliseconds (default: 1000)
+ * @returns OCR result or null if failed/timeout
+ */
+async function pollOcrJob(
+  jobId: string,
+  maxAttempts: number = 60,
+  intervalMs: number = 1000
+): Promise<OcrResponse | null> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const response = await fetch(`${SOLVER_URL}/ocr/${jobId}`);
+
+      if (!response.ok) {
+        console.error(`OCR job polling failed: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const status = (await response.json()) as OcrJobStatusResponse;
+
+      if (status.status === 'completed' || status.status === 'failed') {
+        return status.result;
+      }
+
+      // Job still processing, wait before next poll
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    } catch (error) {
+      console.error('OCR job polling error:', error);
+      return null;
+    }
+  }
+
+  console.error(`OCR job ${jobId} timed out after ${maxAttempts} attempts`);
+  return null;
 }
 
 /**
@@ -77,11 +143,23 @@ export async function processScreenshot(
   await playthroughSongRepo.updateOcrStatus(playthroughId, position, 'processing');
 
   try {
-    // Call solver OCR endpoint
-    const result = await callOcrEndpoint(screenshotPath);
+    // Submit OCR job to solver
+    const jobId = await submitOcrJob(screenshotPath);
+
+    if (!jobId) {
+      const errorMsg = 'OCR job submission failed';
+      await playthroughSongRepo.updateOcrStatus(playthroughId, position, 'failed', errorMsg);
+      console.warn(`${errorMsg} for playthrough ${playthroughId} position ${position}`);
+      return;
+    }
+
+    console.log(`OCR job ${jobId} submitted for playthrough ${playthroughId} position ${position}`);
+
+    // Poll for OCR completion
+    const result = await pollOcrJob(jobId);
 
     if (!result) {
-      const errorMsg = 'OCR request failed';
+      const errorMsg = 'OCR job failed or timed out';
       await playthroughSongRepo.updateOcrStatus(playthroughId, position, 'failed', errorMsg);
       console.warn(`${errorMsg} for playthrough ${playthroughId} position ${position}`);
       return;
@@ -131,7 +209,8 @@ export async function processScreenshot(
           notesHit: player.notes_hit ?? existingStats.notesHit,
           notesMissed: player.notes_missed ?? existingStats.notesMissed,
           longestStreak: player.longest_streak ?? existingStats.longestStreak,
-          starsEarned: player.stars_earned ?? existingStats.starsEarned,
+          // stars_earned must be 1-5 or null; 0 indicates OCR detection failure
+          starsEarned: player.stars_earned || existingStats.starsEarned,
           accuracyPct: player.accuracy_pct ?? existingStats.accuracyPct,
         });
       } else {
@@ -143,7 +222,8 @@ export async function processScreenshot(
           notesHit: player.notes_hit ?? null,
           notesMissed: player.notes_missed ?? null,
           longestStreak: player.longest_streak ?? null,
-          starsEarned: player.stars_earned ?? null,
+          // stars_earned must be 1-5 or null; 0 indicates OCR detection failure
+          starsEarned: player.stars_earned || null,
           accuracyPct: player.accuracy_pct ?? null,
         });
       }

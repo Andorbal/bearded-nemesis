@@ -123,9 +123,15 @@ Not all fields may be successfully extracted depending on image quality and scre
 
 ### PaddleOCR
 
-PaddleOCR is a multilingual OCR toolkit that includes text detection, recognition, and angle classification. The solver uses the English PP-OCRv3 models for detection and recognition, plus a classifier model for handling rotated text. These models are pre-downloaded in the Docker image to avoid runtime downloads.
+PaddleOCR is a multilingual OCR toolkit that includes text detection, recognition, and angle classification. The solver uses **PaddleOCR 2.8.x with PaddlePaddle 2.x**, which provides stable performance on both x86_64 and ARM64 architectures (including Apple Silicon).
 
-The OCR is configured with `use_gpu=False` for compatibility, `use_angle_cls=True` to handle rotated text, and `lang='en'` for English text recognition. Model paths are set via environment variables, allowing different model versions to be swapped in if needed.
+The service uses the English PP-OCRv3 models for detection and recognition, plus a classifier model for handling rotated text. These models are pre-downloaded in the Docker image to avoid runtime downloads. The models are stored in `/opt/paddleocr-models/` and configured via environment variables:
+
+- `PADDLEOCR_DET_MODEL_DIR` - Detection model (en_PP-OCRv3_det_infer)
+- `PADDLEOCR_REC_MODEL_DIR` - Recognition model (en_PP-OCRv3_rec_infer)
+- `PADDLEOCR_CLS_MODEL_DIR` - Classifier model (ch_ppocr_mobile_v2.0_cls_infer)
+
+The OCR is configured with `use_angle_cls=True` to handle rotated text, `lang='en'` for English text recognition, and `use_gpu=False` for CPU-only operation (GPU support can be added by installing CUDA-enabled PaddlePaddle).
 
 ### Asynchronous Processing
 
