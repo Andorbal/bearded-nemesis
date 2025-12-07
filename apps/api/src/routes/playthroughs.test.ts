@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import Fastify, { FastifyInstance } from 'fastify';
+import Fastify, { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import jwt from '@fastify/jwt';
 import { pool } from '../db/pool.js';
 import * as userRepo from '../repositories/userRepository.js';
@@ -68,7 +68,7 @@ describe('Playthrough Routes', () => {
     app = Fastify();
     await app.register(jwt, { secret: 'test-secret' });
 
-    app.decorate('authenticate', async function (request, reply) {
+    app.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
       try {
         await request.jwtVerify();
       } catch (err) {
@@ -76,7 +76,7 @@ describe('Playthrough Routes', () => {
       }
     });
 
-    app.decorate('requireAdmin', async function (request, reply) {
+    app.decorate('requireAdmin', async function (request: FastifyRequest, reply: FastifyReply) {
       if (!request.user.isAdmin) {
         reply.status(403).send({ error: 'Admin access required' });
       }
@@ -86,7 +86,7 @@ describe('Playthrough Routes', () => {
     await app.ready();
 
     // Create tokens
-    userToken = app.jwt.sign({ userId: testUserId, isAdmin: false });
+    userToken = app.jwt.sign({ userId: testUserId, username: 'playthrough_test_user', isAdmin: false });
   });
 
   beforeEach(async () => {
@@ -256,6 +256,7 @@ describe('Playthrough Routes', () => {
 
       const otherUserToken = app.jwt.sign({
         userId: otherUser.id,
+        username: otherUser.username,
         isAdmin: false,
       });
 
@@ -364,6 +365,7 @@ describe('Playthrough Routes', () => {
 
       const otherUserToken = app.jwt.sign({
         userId: otherUser.id,
+        username: otherUser.username,
         isAdmin: false,
       });
 

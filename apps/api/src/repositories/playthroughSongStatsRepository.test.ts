@@ -141,7 +141,7 @@ describe('playthroughSongStatsRepository', () => {
   describe('getStatsForPlaythrough', () => {
     it('returns all stats for playthrough grouped by song position', async () => {
       const user1 = await userRepo.create({
-        username: 'player1',
+        username: `player1_${Date.now()}`,
         passwordHash: 'pass',
         displayName: 'Player 1'
       });

@@ -114,7 +114,7 @@ export async function generateSongList(userId: number, filter: SmartFilter): Pro
   // Build ORDER BY
   let orderBy = 'ORDER BY s.artist, s.title';
   if (filter.sortBy === 'difficulty') {
-    orderBy = `ORDER BY s.${diffCol} ${filter.sortOrder === 'desc' ? 'DESC' : 'ASC'}`;
+    orderBy = `ORDER BY s.${diffCol} ${filter.sortOrder === 'desc' ? 'DESC NULLS LAST' : 'ASC NULLS LAST'}`;
   } else if (filter.sortBy === 'rating') {
     joinUserSongs = true;
     orderBy = `ORDER BY us.song_rating ${filter.sortOrder === 'desc' ? 'DESC NULLS LAST' : 'ASC NULLS LAST'}`;

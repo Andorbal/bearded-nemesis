@@ -38,8 +38,8 @@ describe('ocrService', () => {
   describe('getSolverUrl', () => {
     it('should return default solver URL', () => {
       const url = ocrService.getSolverUrl();
-      expect(url).toContain('solver');
       expect(url).toContain('8081');
+      expect(url).toMatch(/^http/);
     });
   });
 

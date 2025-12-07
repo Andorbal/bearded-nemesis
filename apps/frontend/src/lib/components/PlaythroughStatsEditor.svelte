@@ -20,13 +20,31 @@
 
   let { stats, onSave, onCancel }: Props = $props();
 
-  let score = $state(stats.score ?? '');
-  let accuracyPct = $state(stats.accuracyPct ?? '');
-  let notesHit = $state(stats.notesHit ?? '');
-  let notesMissed = $state(stats.notesMissed ?? '');
-  let longestStreak = $state(stats.longestStreak ?? '');
-  let starsEarned = $state(stats.starsEarned ?? '');
+  // Use derived to get initial values, then allow editing
+  const initialScore = $derived(stats.score ?? '');
+  const initialAccuracyPct = $derived(stats.accuracyPct ?? '');
+  const initialNotesHit = $derived(stats.notesHit ?? '');
+  const initialNotesMissed = $derived(stats.notesMissed ?? '');
+  const initialLongestStreak = $derived(stats.longestStreak ?? '');
+  const initialStarsEarned = $derived(stats.starsEarned ?? '');
+
+  let score = $state(initialScore);
+  let accuracyPct = $state(initialAccuracyPct);
+  let notesHit = $state(initialNotesHit);
+  let notesMissed = $state(initialNotesMissed);
+  let longestStreak = $state(initialLongestStreak);
+  let starsEarned = $state(initialStarsEarned);
   let saving = $state(false);
+
+  // Reset form when stats change
+  $effect(() => {
+    score = initialScore;
+    accuracyPct = initialAccuracyPct;
+    notesHit = initialNotesHit;
+    notesMissed = initialNotesMissed;
+    longestStreak = initialLongestStreak;
+    starsEarned = initialStarsEarned;
+  });
 
   async function handleSave() {
     saving = true;
