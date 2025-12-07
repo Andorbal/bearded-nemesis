@@ -6,8 +6,11 @@
   import * as playthroughsApi from '$lib/api/playthroughs';
   import { createWsPlaythroughService, type ConnectionStatus } from '$lib/services/wsPlaythroughService';
   import type { PlaythroughState, Song } from '@bearded-nemesis/shared';
+  import type { PlaythroughSummary } from '$lib/api/playthroughs';
   import RatingStars from '$lib/components/RatingStars.svelte';
   import DifficultyBadge from '$lib/components/DifficultyBadge.svelte';
+  import PlaythroughSummaryHeader from '$lib/components/PlaythroughSummaryHeader.svelte';
+  import PlaythroughSongCard from '$lib/components/PlaythroughSongCard.svelte';
   import { toastStore } from '$lib/stores/toast';
 
   let loading = $state(true);
@@ -21,6 +24,10 @@
 
   // Rating state
   let myRating = $state<number | null>(null);
+
+  // Summary state
+  let summary = $state<PlaythroughSummary | null>(null);
+  let loadingSummary = $state(false);
 
   const playthroughId = $derived(parseInt($page.params.id || '0'));
   const isHost = $derived(playthrough?.createdBy === $authStore.user?.id);
@@ -41,6 +48,25 @@
       loading = false;
     }
   }
+
+  async function loadSummary() {
+    loadingSummary = true;
+    try {
+      summary = await playthroughsApi.getPlaythroughSummary(playthroughId);
+    } catch (err) {
+      console.error('Failed to load summary:', err);
+      toastStore.error('Failed to load summary');
+    } finally {
+      loadingSummary = false;
+    }
+  }
+
+  // Load summary when playthrough is finished
+  $effect(() => {
+    if (playthrough?.status === 'finished' && !summary && !loadingSummary) {
+      loadSummary();
+    }
+  });
 
   function connectWebSocket() {
     if (!$authStore.accessToken) return;
@@ -163,11 +189,35 @@
       <p class="text-gray-600">Playthrough not found</p>
     </div>
   {:else if isFinished}
-    <div class="card text-center py-12">
-      <h1 class="text-3xl font-bold mb-4">Playthrough Complete!</h1>
-      <p class="text-gray-600 mb-6">This playthrough has been finished.</p>
-      <a href="/playthroughs" class="btn btn-primary">View All Playthroughs</a>
-    </div>
+    {#if loadingSummary}
+      <div class="text-center py-12">
+        <p class="text-gray-600">Loading summary...</p>
+      </div>
+    {:else if summary}
+      <PlaythroughSummaryHeader {summary} />
+
+      <div class="space-y-4">
+        {#each summary.songs as songData}
+          <PlaythroughSongCard
+            {songData}
+            {playthroughId}
+            players={summary.players}
+            onStatsUpdated={loadSummary}
+          />
+        {/each}
+      </div>
+
+      <div class="mt-6">
+        <a href="/playthroughs" class="btn btn-primary">View All Playthroughs</a>
+      </div>
+    {:else}
+      <div class="card text-center py-12">
+        <h1 class="text-3xl font-bold mb-4">Playthrough Complete!</h1>
+        <p class="text-gray-600 mb-6">Failed to load summary.</p>
+        <button onclick={loadSummary} class="btn btn-secondary mr-2">Retry</button>
+        <a href="/playthroughs" class="btn btn-primary">View All Playthroughs</a>
+      </div>
+    {/if}
   {:else}
     <!-- Connection Status -->
     <div class="mb-4 flex items-center gap-2">
