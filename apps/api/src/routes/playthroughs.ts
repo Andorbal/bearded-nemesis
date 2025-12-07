@@ -38,6 +38,19 @@ const positionSchema = z.object({
   position: z.coerce.number().min(0),
 });
 
+const updateStatsSchema = z.object({
+  score: z.number().optional(),
+  accuracyPct: z.number().min(0).max(100).optional(),
+  notesHit: z.number().min(0).optional(),
+  notesMissed: z.number().min(0).optional(),
+  longestStreak: z.number().min(0).optional(),
+  starsEarned: z.number().min(1).max(6).optional(),
+});
+
+const statsUserIdSchema = z.object({
+  userId: z.coerce.number(),
+});
+
 const playthroughRoutes: FastifyPluginAsync = async (app) => {
   // All routes require authentication
   app.addHook('onRequest', app.authenticate);
@@ -528,23 +541,10 @@ const playthroughRoutes: FastifyPluginAsync = async (app) => {
 
   // Update stats for a player on a song (for OCR correction)
   app.patch('/:id/songs/:position/stats/:userId', async (request, reply) => {
-    const updateStatsSchema = z.object({
-      score: z.number().optional(),
-      accuracyPct: z.number().min(0).max(100).optional(),
-      notesHit: z.number().min(0).optional(),
-      notesMissed: z.number().min(0).optional(),
-      longestStreak: z.number().min(0).optional(),
-      starsEarned: z.number().min(1).max(6).optional(),
-    });
-
-    const userIdSchema = z.object({
-      userId: z.coerce.number(),
-    });
-
     try {
       const { id } = playthroughIdSchema.parse(request.params);
       const { position } = positionSchema.parse(request.params);
-      const { userId } = userIdSchema.parse(request.params);
+      const { userId } = statsUserIdSchema.parse(request.params);
       const updates = updateStatsSchema.parse(request.body);
 
       const playthrough = await playthroughRepo.findById(id);
