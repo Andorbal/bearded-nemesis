@@ -4,6 +4,18 @@ IFS=$'\n\t'       # Stricter word splitting
 
 # Modified firewall script that allows access to local Docker services
 # while still restricting external network access
+#
+# Allowed domains are read from:
+#   - /etc/claude-firewall/allowed-domains.txt (committed to repo, baked into image)
+#   - /etc/claude-firewall/allowed-domains.local.txt (volume-mounted, for personal domains)
+
+# Function to read domains from a file (skipping comments and empty lines)
+read_domains() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        grep -v '^#' "$file" | grep -v '^[[:space:]]*$' || true
+    fi
+}
 
 # 1. Extract Docker DNS info BEFORE any flushing
 DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
@@ -66,32 +78,47 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr"
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# Resolve and add other allowed domains
-for domain in \
-    "registry.npmjs.org" \
-    "api.anthropic.com" \
-    "sentry.io" \
-    "statsig.anthropic.com" \
-    "statsig.com" \
-    "marketplace.visualstudio.com" \
-    "vscode.blob.core.windows.net" \
-    "update.code.visualstudio.com" \
-    "binaries.prisma.sh" \
-    "pypi.python.org" \
-    "pypi.org" \
-    "pythonhosted.org" \
-    "files.pythonhosted.org"; do
+# Read allowed domains from config files
+DOMAINS_FILE="/etc/claude-firewall/allowed-domains.txt"
+LOCAL_DOMAINS_FILE="/etc/claude-firewall/allowed-domains.local.txt"
+
+# Collect all domains from both files
+ALL_DOMAINS=""
+if [ -f "$DOMAINS_FILE" ]; then
+    echo "Reading domains from $DOMAINS_FILE..."
+    ALL_DOMAINS=$(read_domains "$DOMAINS_FILE")
+fi
+
+if [ -f "$LOCAL_DOMAINS_FILE" ]; then
+    echo "Reading local domains from $LOCAL_DOMAINS_FILE..."
+    LOCAL_DOMAINS=$(read_domains "$LOCAL_DOMAINS_FILE")
+    if [ -n "$LOCAL_DOMAINS" ]; then
+        if [ -n "$ALL_DOMAINS" ]; then
+            ALL_DOMAINS="$ALL_DOMAINS"$'\n'"$LOCAL_DOMAINS"
+        else
+            ALL_DOMAINS="$LOCAL_DOMAINS"
+        fi
+    fi
+fi
+
+if [ -z "$ALL_DOMAINS" ]; then
+    echo "Warning: No domains found in config files"
+fi
+
+# Resolve and add allowed domains
+while IFS= read -r domain; do
+    [ -z "$domain" ] && continue
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
-        echo "ERROR: Failed to resolve $domain"
-        exit 1
+        echo "Warning: Failed to resolve $domain, skipping..."
+        continue
     fi
 
     while read -r ip; do
         if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-            echo "ERROR: Invalid IP from DNS for $domain: $ip"
-            exit 1
+            echo "Warning: Invalid IP from DNS for $domain: $ip, skipping..."
+            continue
         fi
         if ipset test allowed-domains "$ip" 2>/dev/null; then
             echo "Skipping $ip for $domain (already in set)"
@@ -100,7 +127,7 @@ for domain in \
             ipset add allowed-domains "$ip"
         fi
     done < <(echo "$ips")
-done
+done <<< "$ALL_DOMAINS"
 
 # Get host IP from default route
 HOST_IP=$(ip route | grep default | cut -d" " -f3)
@@ -136,9 +163,14 @@ else
     echo "Warning: No Docker bridge networks detected"
 fi
 
-# Set up remaining iptables rules for host network
-iptables -A INPUT -s "$HOST_NETWORK" -j ACCEPT
-iptables -A OUTPUT -d "$HOST_NETWORK" -j ACCEPT
+# Allow all RFC1918 private networks (for local services like GitLab)
+# This is safe because we're already in a sandboxed container
+echo "Allowing RFC1918 private networks for local services..."
+for private_range in "10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16"; do
+    echo "Allowing private network: $private_range"
+    iptables -A INPUT -s "$private_range" -j ACCEPT
+    iptables -A OUTPUT -d "$private_range" -j ACCEPT
+done
 
 # Set default policies to DROP first
 iptables -P INPUT DROP

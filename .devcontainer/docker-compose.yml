@@ -34,6 +34,7 @@ services:
       - ../:/workspace:delegated
       - claude-bash-history:/commandhistory
       - claude-config:/home/node/.claude
+      - ./allowed-domains.local.txt:/etc/claude-firewall/allowed-domains.local.txt:ro
       # Optional: Mount your git config for authentication
       #- ~/.gitconfig:/home/node/.gitconfig:ro
       #- ~/.ssh:/home/node/.ssh:ro

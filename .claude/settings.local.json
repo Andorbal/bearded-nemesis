@@ -21,7 +21,8 @@
       "Bash(gh run view:*)",
       "Bash(docker build:*)",
       "Bash(pnpm --filter @bearded-nemesis/api build:*)",
-      "Bash(pnpm --filter @bearded-nemesis/api test:*)"
+      "Bash(pnpm --filter @bearded-nemesis/api test:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

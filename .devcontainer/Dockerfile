@@ -134,10 +134,14 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
 
-# Copy and set up firewall scripts
+# Copy and set up firewall scripts and domain lists
 COPY init-firewall.sh /usr/local/bin/
+COPY allowed-domains.txt /etc/claude-firewall/
+# Create directory for local domain file (will be volume-mounted or created at runtime)
+RUN mkdir -p /etc/claude-firewall
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
+  chmod 644 /etc/claude-firewall/allowed-domains.txt && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 USER node

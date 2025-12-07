@@ -1,0 +1,22 @@
+# Allowed domains for Claude Code sandbox
+# One domain per line. Lines starting with # are comments.
+# Empty lines are ignored.
+
+# Package registries
+registry.npmjs.org
+binaries.prisma.sh
+pypi.python.org
+pypi.org
+pythonhosted.org
+files.pythonhosted.org
+
+# Anthropic services
+api.anthropic.com
+sentry.io
+statsig.anthropic.com
+statsig.com
+
+# VS Code extensions
+marketplace.visualstudio.com
+vscode.blob.core.windows.net
+update.code.visualstudio.com
