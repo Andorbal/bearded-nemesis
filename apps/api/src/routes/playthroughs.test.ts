@@ -8,6 +8,8 @@ import * as setlistSongRepo from '../repositories/setlistSongRepository.js';
 import * as songRepo from '../repositories/songRepository.js';
 import * as playthroughRepo from '../repositories/playthroughRepository.js';
 import * as playthroughSongRepo from '../repositories/playthroughSongRepository.js';
+import * as playthroughPlayerRepo from '../repositories/playthroughPlayerRepository.js';
+import * as playthroughSongStatsRepo from '../repositories/playthroughSongStatsRepository.js';
 import playthroughRoutes from './playthroughs.js';
 import type { JwtPayload } from '@bearded-nemesis/shared';
 
@@ -142,6 +144,131 @@ describe('Playthrough Routes', () => {
 
       // Should be 404 (route not found) since only PATCH is defined
       expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('GET /playthroughs/:id/summary', () => {
+    it('returns complete playthrough summary', async () => {
+      // Create second user for multi-player test
+      const user2 = await userRepo.create({
+        username: `playthrough_test_user2_${Date.now()}`,
+        passwordHash: 'hash',
+        displayName: 'Test User 2',
+        isAdmin: false,
+      });
+
+      // Add players to playthrough
+      await playthroughPlayerRepo.addPlayer({
+        playthroughId: testPlaythroughId,
+        userId: testUserId,
+        instrument: 'drums',
+        difficulty: 'expert',
+        isProMode: false,
+      });
+
+      await playthroughPlayerRepo.addPlayer({
+        playthroughId: testPlaythroughId,
+        userId: user2.id,
+        instrument: 'guitar',
+        difficulty: 'hard',
+        isProMode: false,
+      });
+
+      // Finish playthrough
+      await playthroughRepo.finish(testPlaythroughId);
+
+      // Get playthrough songs
+      const songs = await playthroughSongRepo.getSongs(testPlaythroughId);
+      expect(songs.length).toBeGreaterThan(0);
+
+      // Create stats for first song
+      await playthroughSongStatsRepo.create({
+        playthroughSongId: songs[0].id,
+        userId: testUserId,
+        score: 100000,
+        rating: 5,
+        accuracyPct: 98.5,
+        notesHit: 450,
+        notesMissed: 10,
+        longestStreak: 200,
+        starsEarned: 5,
+      });
+
+      await playthroughSongStatsRepo.create({
+        playthroughSongId: songs[0].id,
+        userId: user2.id,
+        score: 90000,
+        rating: 4,
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/playthroughs/${testPlaythroughId}/summary`,
+        headers: { authorization: `Bearer ${userToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      expect(body.playthrough.id).toBe(testPlaythroughId);
+      expect(body.setlist.name).toBe('Test Setlist');
+      expect(body.players).toHaveLength(2);
+
+      // Should have 2 songs from the test setlist
+      expect(body.songs).toHaveLength(2);
+
+      // Check first song has ratings and stats
+      expect(body.songs[0].position).toBe(0);
+      expect(body.songs[0].song.id).toBe(testSongIds[0]);
+      expect(body.songs[0].ratings).toHaveLength(2);
+      expect(body.songs[0].ratings[0].rating).toBe(5);
+      expect(body.songs[0].ratings[1].rating).toBe(4);
+      expect(body.songs[0].stats).toHaveLength(2);
+      expect(body.songs[0].stats[0].score).toBe(100000);
+      expect(body.songs[0].stats[0].username).toBe('playthrough_test_user');
+      expect(body.songs[0].stats[1].score).toBe(90000);
+
+      // Second song should have no stats
+      expect(body.songs[1].position).toBe(1);
+      expect(body.songs[1].ratings).toHaveLength(0);
+      expect(body.songs[1].stats).toHaveLength(0);
+
+      // Clean up
+      await pool.query('DELETE FROM users WHERE id = $1', [user2.id]);
+    });
+
+    it('requires authentication', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/playthroughs/1/summary',
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('enforces access control (participant or host only)', async () => {
+      const otherUser = await userRepo.create({
+        username: `playthrough_other_user_${Date.now()}`,
+        passwordHash: 'hash',
+        displayName: 'Other User',
+        isAdmin: false,
+      });
+
+      const otherUserToken = app.jwt.sign({
+        userId: otherUser.id,
+        isAdmin: false,
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/playthroughs/${testPlaythroughId}/summary`,
+        headers: { authorization: `Bearer ${otherUserToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+
+      // Clean up
+      await pool.query('DELETE FROM users WHERE id = $1', [otherUser.id]);
     });
   });
 });

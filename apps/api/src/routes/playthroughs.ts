@@ -111,6 +111,82 @@ const playthroughRoutes: FastifyPluginAsync = async (app) => {
     };
   });
 
+  // Get playthrough summary (for completion screen)
+  app.get('/:id/summary', async (request, reply) => {
+    const { id } = playthroughIdSchema.parse(request.params);
+
+    const playthrough = await playthroughRepo.findById(id);
+    if (!playthrough) {
+      return reply.status(404).send({ error: 'Playthrough not found' });
+    }
+
+    // Check access: host or participant
+    const isHost = playthrough.createdBy === request.user.userId;
+    const isParticipant = await playthroughPlayerRepo.isPlayer(id, request.user.userId);
+
+    if (!isHost && !isParticipant && !request.user.isAdmin) {
+      return reply.status(403).send({ error: 'Forbidden' });
+    }
+
+    // Fetch all related data
+    const setlist = await setlistRepo.findById(playthrough.setlistId);
+    const players = await playthroughPlayerRepo.getPlayers(id);
+    const playthroughSongs = await playthroughSongRepo.getSongs(id);
+    const allStats = await playthroughSongStatsRepo.getStatsForPlaythrough(id);
+
+    // Build song data with ratings and stats
+    const songs = await Promise.all(
+      playthroughSongs.map(async (ps) => {
+        const song = await songRepo.findById(ps.songId);
+
+        // Get stats for this song
+        const songStats = allStats.filter((s) => s.playthroughSongId === ps.id);
+
+        // Build stats array with username
+        const stats = await Promise.all(
+          songStats.map(async (stat) => {
+            const user = await userRepo.findById(stat.userId);
+            return {
+              userId: stat.userId,
+              username: user?.username || 'Unknown',
+              score: stat.score,
+              accuracyPct: stat.accuracyPct,
+              notesHit: stat.notesHit,
+              notesMissed: stat.notesMissed,
+              longestStreak: stat.longestStreak,
+              starsEarned: stat.starsEarned,
+            };
+          })
+        );
+
+        // Build ratings array
+        const ratings = songStats
+          .filter((s) => s.rating !== null)
+          .map((s) => ({
+            userId: s.userId,
+            username: stats.find((st) => st.userId === s.userId)?.username || 'Unknown',
+            rating: s.rating!,
+          }));
+
+        return {
+          position: ps.position,
+          song: song!,
+          screenshotPath: ps.screenshotPath,
+          ocrStatus: ps.ocrStatus,
+          ratings,
+          stats,
+        };
+      })
+    );
+
+    return {
+      playthrough,
+      setlist: setlist ? { id: setlist.id, name: setlist.name } : null,
+      players,
+      songs,
+    };
+  });
+
   // Advance to next song (host only)
   app.patch('/:id/advance', async (request, reply) => {
     const { id } = playthroughIdSchema.parse(request.params);
