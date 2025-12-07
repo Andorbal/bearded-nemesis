@@ -136,4 +136,49 @@ describe('userRepository', () => {
     const count = await userRepo.countAdmins();
     expect(count).toBeGreaterThanOrEqual(2);
   });
+
+  it('should batch fetch users by IDs', async () => {
+    const user1 = await userRepo.create({
+      username: 'userrepotest_batch1',
+      passwordHash: 'hash',
+      displayName: 'Batch User 1',
+    });
+
+    const user2 = await userRepo.create({
+      username: 'userrepotest_batch2',
+      passwordHash: 'hash',
+      displayName: 'Batch User 2',
+    });
+
+    const user3 = await userRepo.create({
+      username: 'userrepotest_batch3',
+      passwordHash: 'hash',
+      displayName: 'Batch User 3',
+    });
+
+    const userMap = await userRepo.findByIds([user1.id, user2.id, user3.id]);
+
+    expect(userMap.size).toBe(3);
+    expect(userMap.get(user1.id)?.username).toBe('userrepotest_batch1');
+    expect(userMap.get(user2.id)?.username).toBe('userrepotest_batch2');
+    expect(userMap.get(user3.id)?.username).toBe('userrepotest_batch3');
+  });
+
+  it('should handle empty array in batch fetch', async () => {
+    const userMap = await userRepo.findByIds([]);
+    expect(userMap.size).toBe(0);
+  });
+
+  it('should exclude soft-deleted users in batch fetch', async () => {
+    const user1 = await userRepo.create({
+      username: 'userrepotest_batchdeleted',
+      passwordHash: 'hash',
+      displayName: 'Batch Deleted',
+    });
+
+    await userRepo.softDelete(user1.id);
+
+    const userMap = await userRepo.findByIds([user1.id]);
+    expect(userMap.size).toBe(0);
+  });
 });

@@ -133,3 +133,23 @@ export async function countAdmins(): Promise<number> {
   );
   return parseInt(result?.count ?? '0', 10);
 }
+
+/**
+ * Find multiple users by their IDs in a single query.
+ * Returns a Map for O(1) lookups.
+ */
+export async function findByIds(ids: number[]): Promise<Map<number, User>> {
+  if (ids.length === 0) return new Map();
+
+  const rows = await query<DbUser>(
+    'SELECT * FROM users WHERE id = ANY($1) AND deleted_at IS NULL',
+    [ids]
+  );
+
+  const userMap = new Map<number, User>();
+  for (const row of rows) {
+    const user = mapToUser(row);
+    userMap.set(user.id, user);
+  }
+  return userMap;
+}

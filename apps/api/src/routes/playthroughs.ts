@@ -134,50 +134,53 @@ const playthroughRoutes: FastifyPluginAsync = async (app) => {
     const playthroughSongs = await playthroughSongRepo.getSongs(id);
     const allStats = await playthroughSongStatsRepo.getStatsForPlaythrough(id);
 
+    // Batch fetch all unique users and songs to avoid N+1 queries
+    const uniqueUserIds = Array.from(new Set(allStats.map((s) => s.userId)));
+    const uniqueSongIds = Array.from(new Set(playthroughSongs.map((ps) => ps.songId)));
+
+    const userMap = await userRepo.findByIds(uniqueUserIds);
+    const songMap = await songRepo.findByIds(uniqueSongIds);
+
     // Build song data with ratings and stats
-    const songs = await Promise.all(
-      playthroughSongs.map(async (ps) => {
-        const song = await songRepo.findById(ps.songId);
+    const songs = playthroughSongs.map((ps) => {
+      const song = songMap.get(ps.songId);
 
-        // Get stats for this song
-        const songStats = allStats.filter((s) => s.playthroughSongId === ps.id);
+      // Get stats for this song
+      const songStats = allStats.filter((s) => s.playthroughSongId === ps.id);
 
-        // Build stats array with username
-        const stats = await Promise.all(
-          songStats.map(async (stat) => {
-            const user = await userRepo.findById(stat.userId);
-            return {
-              userId: stat.userId,
-              username: user?.username || 'Unknown',
-              score: stat.score,
-              accuracyPct: stat.accuracyPct,
-              notesHit: stat.notesHit,
-              notesMissed: stat.notesMissed,
-              longestStreak: stat.longestStreak,
-              starsEarned: stat.starsEarned,
-            };
-          })
-        );
-
-        // Build ratings array
-        const ratings = songStats
-          .filter((s) => s.rating !== null)
-          .map((s) => ({
-            userId: s.userId,
-            username: stats.find((st) => st.userId === s.userId)?.username || 'Unknown',
-            rating: s.rating!,
-          }));
-
+      // Build stats array with username
+      const stats = songStats.map((stat) => {
+        const user = userMap.get(stat.userId);
         return {
-          position: ps.position,
-          song: song!,
-          screenshotPath: ps.screenshotPath,
-          ocrStatus: ps.ocrStatus,
-          ratings,
-          stats,
+          userId: stat.userId,
+          username: user?.username || 'Unknown',
+          score: stat.score,
+          accuracyPct: stat.accuracyPct,
+          notesHit: stat.notesHit,
+          notesMissed: stat.notesMissed,
+          longestStreak: stat.longestStreak,
+          starsEarned: stat.starsEarned,
         };
-      })
-    );
+      });
+
+      // Build ratings array
+      const ratings = songStats
+        .filter((s) => s.rating !== null)
+        .map((s) => ({
+          userId: s.userId,
+          username: stats.find((st) => st.userId === s.userId)?.username || 'Unknown',
+          rating: s.rating!,
+        }));
+
+      return {
+        position: ps.position,
+        song: song!,
+        screenshotPath: ps.screenshotPath,
+        ocrStatus: ps.ocrStatus,
+        ratings,
+        stats,
+      };
+    });
 
     return {
       playthrough,

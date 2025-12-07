@@ -369,3 +369,23 @@ export async function bulkUpdate(songIds: number[], data: UpdateSongData): Promi
 
   return result.length;
 }
+
+/**
+ * Find multiple songs by their IDs in a single query.
+ * Returns a Map for O(1) lookups.
+ */
+export async function findByIds(ids: number[]): Promise<Map<number, Song>> {
+  if (ids.length === 0) return new Map();
+
+  const rows = await query<DbSong>(
+    'SELECT * FROM songs WHERE id = ANY($1)',
+    [ids]
+  );
+
+  const songMap = new Map<number, Song>();
+  for (const row of rows) {
+    const song = mapToSong(row);
+    songMap.set(song.id, song);
+  }
+  return songMap;
+}

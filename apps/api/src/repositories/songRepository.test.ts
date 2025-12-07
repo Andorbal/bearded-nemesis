@@ -84,4 +84,34 @@ describe('songRepository', () => {
     const noSongs = await songRepo.search({ minDifficulty: 6, maxDifficulty: 7, instrument: 'drums', limit: 5000 });
     expect(noSongs.some(s => s.id === testSong.id)).toBe(false);
   });
+
+  it('should batch fetch songs by IDs', async () => {
+    const song1 = await songRepo.create({
+      id: 99997,
+      slug: 'batch-test-1',
+      title: 'Batch Test 1',
+      artist: 'Test Artist',
+    });
+
+    const song2 = await songRepo.create({
+      id: 99998,
+      slug: 'batch-test-2',
+      title: 'Batch Test 2',
+      artist: 'Test Artist',
+    });
+
+    const songMap = await songRepo.findByIds([99997, 99998, testSong.id]);
+
+    expect(songMap.size).toBe(2); // testSong.id not created yet
+    expect(songMap.get(99997)?.title).toBe('Batch Test 1');
+    expect(songMap.get(99998)?.title).toBe('Batch Test 2');
+
+    // Cleanup
+    await pool.query('DELETE FROM songs WHERE id IN ($1, $2)', [99997, 99998]);
+  });
+
+  it('should handle empty array in batch fetch', async () => {
+    const songMap = await songRepo.findByIds([]);
+    expect(songMap.size).toBe(0);
+  });
 });
