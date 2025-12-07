@@ -7,7 +7,7 @@ export interface CreatePlaythroughRequest {
     userId: number;
     instrument: Instrument;
     difficulty: Difficulty;
-    isProMode: boolean;
+    proMode: boolean;
   }>;
 }
 
@@ -52,14 +52,14 @@ export async function createPlaythrough(data: CreatePlaythroughRequest): Promise
 
 export async function advanceSong(id: number): Promise<void> {
   await apiRequest(`/playthroughs/${id}/advance`, {
-    method: 'POST',
+    method: 'PATCH',
     authenticated: true,
   });
 }
 
 export async function previousSong(id: number): Promise<void> {
   await apiRequest(`/playthroughs/${id}/back`, {
-    method: 'POST',
+    method: 'PATCH',
     authenticated: true,
   });
 }
@@ -82,17 +82,10 @@ export async function submitRating(playthroughId: number, rating: number): Promi
 export async function uploadScreenshot(playthroughId: number, position: number, file: File): Promise<void> {
   const formData = new FormData();
   formData.append('screenshot', file);
-  formData.append('position', position.toString());
 
-  const response = await fetch(`/api/playthroughs/${playthroughId}/screenshot`, {
+  await apiRequest(`/playthroughs/${playthroughId}/songs/${position}/screenshot`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('bearded-nemesis-auth') ? JSON.parse(localStorage.getItem('bearded-nemesis-auth')!).accessToken : ''}`,
-    },
+    authenticated: true,
     body: formData,
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to upload screenshot');
-  }
 }

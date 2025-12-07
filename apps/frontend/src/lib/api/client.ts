@@ -27,9 +27,14 @@ export async function apiRequest<T>(
   const { authenticated = false, skipRefresh = false, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...((fetchOptions.headers as Record<string, string>) || {}),
   };
+
+  // Only set Content-Type when there's a body and it's not FormData
+  // FormData requires browser to set Content-Type with boundary
+  if (fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (authenticated) {
     const auth = get(authStore);

@@ -1,7 +1,7 @@
 /**
  * WebSocket Integration Tests
  *
- * These tests require the API server to be running on localhost:3001.
+ * These tests require the API server to be running on localhost:3010.
  * They are marked as skipped by default and should be run manually:
  *
  * 1. Start API: pnpm --filter @bearded-nemesis/api dev
@@ -32,7 +32,7 @@ function withDone(fn: (done: (err?: Error) => void) => void): () => Promise<void
 // NOTE: This test requires the API server to be running
 // Run with: pnpm run dev (in one terminal), then pnpm test (in another)
 
-const API_WS_URL = 'ws://localhost:3001';
+const API_WS_URL = 'ws://localhost:3010';
 
 describe('WebSocket Playthrough Integration', () => {
   let testUserId: number;

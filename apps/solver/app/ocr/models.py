@@ -1,6 +1,7 @@
 """Data models for OCR extraction."""
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from typing import List, Optional, Any
+from pydantic import BaseModel, Field, field_serializer, model_serializer
+import numpy as np
 
 
 class ExtractedPlayerStats(BaseModel):
@@ -15,6 +16,16 @@ class ExtractedPlayerStats(BaseModel):
     notes_hit: Optional[int] = None
     notes_missed: Optional[int] = None
     avg_multiplier: Optional[float] = None
+
+    @model_serializer(mode='wrap')
+    def _convert_numpy_types(self, serializer: Any) -> dict:
+        """Convert numpy types to Python native types for JSON serialization."""
+        data = serializer(self)
+        # Convert numpy types to Python types
+        for key, value in data.items():
+            if isinstance(value, (np.integer, np.floating, np.bool_)):
+                data[key] = value.item()
+        return data
 
 
 class OcrResult(BaseModel):

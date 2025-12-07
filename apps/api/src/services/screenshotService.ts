@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-const SCREENSHOTS_DIR = process.env.SCREENSHOTS_DIR || './screenshots';
+const SCREENSHOTS_DIR = process.env.SCREENSHOT_PATH || '../../screenshots';
 
 /**
  * Generate screenshot filename path.

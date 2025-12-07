@@ -102,7 +102,7 @@ export async function updateOcrStatus(
     `UPDATE playthrough_songs
      SET ocr_status = $1,
          ocr_error = $2,
-         ocr_processed_at = CASE WHEN $1 IN ('completed', 'failed') THEN NOW() ELSE NULL END
+         ocr_processed_at = CASE WHEN $1::VARCHAR IN ('completed', 'failed') THEN NOW() ELSE NULL END
      WHERE playthrough_id = $3 AND position = $4`,
     [status, error || null, playthroughId, position]
   );

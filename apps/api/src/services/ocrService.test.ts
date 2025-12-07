@@ -44,19 +44,19 @@ describe('ocrService', () => {
   });
 
   describe('processScreenshot', () => {
-    it('should handle failed OCR request gracefully', async () => {
-      // Mock fetch to reject
+    it('should handle failed OCR job submission gracefully', async () => {
+      // Mock fetch to reject on job submission
       (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(
         new Error('Network error')
       );
 
       // Should not throw
       await expect(
-        ocrService.processScreenshot(1, 1, '/path/to/screenshot.jpg')
+        ocrService.processScreenshot(1, 1, '/workspace/screenshots/test.jpg')
       ).resolves.not.toThrow();
     });
 
-    it('should handle non-200 response gracefully', async () => {
+    it('should handle non-200 response on job submission gracefully', async () => {
       // Mock fetch to return error response
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,
@@ -66,25 +66,97 @@ describe('ocrService', () => {
 
       // Should not throw
       await expect(
-        ocrService.processScreenshot(1, 1, '/path/to/screenshot.jpg')
+        ocrService.processScreenshot(1, 1, '/workspace/screenshots/test.jpg')
       ).resolves.not.toThrow();
     });
 
-    it('should handle empty OCR result gracefully', async () => {
-      // Mock fetch to return empty result
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            players: [],
-            errors: [],
-          }),
+    it('should handle async OCR job completion', async () => {
+      const jobId = 'test-job-123';
+      let callCount = 0;
+
+      // Mock fetch for job submission and polling
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
+        callCount++;
+
+        // First call: submit job
+        if (callCount === 1) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ job_id: jobId, status: 'pending' }),
+          });
+        }
+
+        // Subsequent calls: poll for status
+        // First poll: still processing
+        if (callCount === 2) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                job_id: jobId,
+                status: 'processing',
+                result: null,
+              }),
+          });
+        }
+
+        // Second poll: completed with results
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              job_id: jobId,
+              status: 'completed',
+              result: {
+                success: true,
+                players: [{ gamertag: 'TestPlayer', score: 100000 }],
+                errors: [],
+              },
+            }),
+        });
       });
 
       // Should not throw
       await expect(
-        ocrService.processScreenshot(1, 1, '/path/to/screenshot.jpg')
+        ocrService.processScreenshot(1, 1, '/workspace/screenshots/test.jpg')
+      ).resolves.not.toThrow();
+
+      // Should have made 3 calls: submit + 2 polls
+      expect(callCount).toBeGreaterThanOrEqual(3);
+    });
+
+    it('should handle empty OCR result gracefully', async () => {
+      const jobId = 'test-job-456';
+
+      // Mock fetch for immediate completion with empty results
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
+        if (url.includes('/ocr/')) {
+          // Polling call
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                job_id: jobId,
+                status: 'completed',
+                result: {
+                  success: true,
+                  players: [],
+                  errors: [],
+                },
+              }),
+          });
+        }
+
+        // Job submission
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ job_id: jobId, status: 'pending' }),
+        });
+      });
+
+      // Should not throw
+      await expect(
+        ocrService.processScreenshot(1, 1, '/workspace/screenshots/test.jpg')
       ).resolves.not.toThrow();
     });
   });

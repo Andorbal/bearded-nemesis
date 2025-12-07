@@ -30,7 +30,7 @@ Start the development server:
 pnpm dev
 ```
 
-The API runs on port 3001 by default. The development server uses tsx for TypeScript execution with hot reloading.
+The API runs on port 3010 by default. The development server uses tsx for TypeScript execution with hot reloading.
 
 ## Environment Variables
 

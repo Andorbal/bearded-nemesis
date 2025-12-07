@@ -26,6 +26,7 @@ def get_ocr() -> PaddleOCR:
     """Get or create PaddleOCR instance."""
     global _ocr_instance
     if _ocr_instance is None:
+        # PaddleOCR 2.8 with PaddlePaddle 2.x (stable on ARM64)
         _ocr_instance = PaddleOCR(
             use_angle_cls=True,
             lang='en',
@@ -33,7 +34,7 @@ def get_ocr() -> PaddleOCR:
             det_model_dir=os.environ.get('PADDLEOCR_DET_MODEL_DIR'),
             rec_model_dir=os.environ.get('PADDLEOCR_REC_MODEL_DIR'),
             cls_model_dir=os.environ.get('PADDLEOCR_CLS_MODEL_DIR'),
-            show_log=False,  # Suppress verbose logging
+            show_log=False,
         )
     return _ocr_instance
 

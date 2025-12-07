@@ -43,13 +43,13 @@ export class WsPlaythroughService {
     // Determine WebSocket URL based on current location
     if (typeof window === 'undefined') {
       // SSR fallback
-      return 'ws://localhost:3001';
+      return 'ws://localhost:3010';
     }
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.hostname;
     // In dev, use API port directly; in prod, use same port
     const isDev = window.location.port === '5173';
-    const port = isDev ? '3001' : window.location.port;
+    const port = isDev ? '3010' : window.location.port;
     return `${protocol}//${host}${port ? ':' + port : ''}`;
   }
 

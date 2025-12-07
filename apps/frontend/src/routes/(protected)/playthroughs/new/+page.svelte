@@ -18,7 +18,7 @@
     userId: number;
     instrument: Instrument;
     difficulty: Difficulty;
-    isProMode: boolean;
+    proMode: boolean;
   }
 
   let players = $state<Player[]>([
@@ -26,7 +26,7 @@
       userId: $authStore.user?.id ?? 0,
       instrument: 'drums',
       difficulty: 'expert',
-      isProMode: false,
+      proMode: false,
     },
   ]);
 
@@ -53,7 +53,7 @@
       userId: $authStore.user?.id ?? 0,
       instrument: 'guitar',
       difficulty: 'expert',
-      isProMode: false,
+      proMode: false,
     }];
   }
 
@@ -151,7 +151,7 @@
                     <label class="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        bind:checked={player.isProMode}
+                        bind:checked={player.proMode}
                         class="w-4 h-4"
                       />
                       <span class="text-sm">Pro Mode</span>

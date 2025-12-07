@@ -2,7 +2,11 @@
   "name": "bearded-nemesis",
   "private": true,
   "scripts": {
+    "start": "concurrently -n \"API,Frontend\" -c \"blue,magenta\" \"pnpm --filter @bearded-nemesis/api dev\" \"pnpm --filter @bearded-nemesis/frontend dev\"",
     "dev": "echo 'Run dev in individual apps'",
+    "db:migrate": "pnpm --filter @bearded-nemesis/api db:migrate",
+    "db:seed": "pnpm --filter @bearded-nemesis/api db:seed",
+    "db:reset": "pnpm --filter @bearded-nemesis/api db:reset",
     "lint": "pnpm run --recursive lint",
     "test": "pnpm run --recursive test",
     "build": "pnpm run --recursive build"
@@ -11,6 +15,7 @@
     "node": ">=20.0.0"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "tsx": "^4.21.0"
   }
 }

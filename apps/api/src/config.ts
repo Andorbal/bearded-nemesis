@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env.local'), override: false });
 
 const configSchema = z.object({
-  port: z.coerce.number().default(3001),
+  port: z.coerce.number().default(3010),
   host: z.string().default('0.0.0.0'),
   databaseUrl: z.string(),
   solverUrl: z.string().default('http://localhost:8081'),

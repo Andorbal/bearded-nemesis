@@ -45,7 +45,7 @@ pnpm --filter @bearded-nemesis/shared build
 
 # Start services
 docker-compose up -d              # PostgreSQL (port 5434) and Solver (port 8081)
-pnpm --filter @bearded-nemesis/api dev      # API on port 3001
+pnpm --filter @bearded-nemesis/api dev      # API on port 3010
 pnpm --filter @bearded-nemesis/frontend dev # Frontend on port 5173
 
 # Database

@@ -75,7 +75,7 @@ const playthroughRoutes: FastifyPluginAsync = async (app) => {
         body.players
       );
 
-      return result;
+      return result.playthrough;
     } catch (error) {
       return reply.status(400).send({
         error: 'Failed to create playthrough',
@@ -105,7 +105,7 @@ const playthroughRoutes: FastifyPluginAsync = async (app) => {
     const songs = await playthroughSongRepo.getSongs(id);
 
     return {
-      playthrough,
+      ...playthrough,
       players,
       songs,
     };
