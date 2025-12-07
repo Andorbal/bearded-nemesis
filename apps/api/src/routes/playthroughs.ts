@@ -525,6 +525,62 @@ const playthroughRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(400).send({ error: message });
     }
   });
+
+  // Update stats for a player on a song (for OCR correction)
+  app.patch('/:id/songs/:position/stats/:userId', async (request, reply) => {
+    const updateStatsSchema = z.object({
+      score: z.number().optional(),
+      accuracyPct: z.number().min(0).max(100).optional(),
+      notesHit: z.number().min(0).optional(),
+      notesMissed: z.number().min(0).optional(),
+      longestStreak: z.number().min(0).optional(),
+      starsEarned: z.number().min(1).max(6).optional(),
+    });
+
+    const userIdSchema = z.object({
+      userId: z.coerce.number(),
+    });
+
+    try {
+      const { id } = playthroughIdSchema.parse(request.params);
+      const { position } = positionSchema.parse(request.params);
+      const { userId } = userIdSchema.parse(request.params);
+      const updates = updateStatsSchema.parse(request.body);
+
+      const playthrough = await playthroughRepo.findById(id);
+      if (!playthrough) {
+        return reply.status(404).send({ error: 'Playthrough not found' });
+      }
+
+      // Verify user is a participant
+      const isParticipant = await playthroughService.isParticipant(id, request.user.userId);
+      if (!isParticipant && !request.user.isAdmin) {
+        return reply.status(403).send({ error: 'Must be a participant to edit stats' });
+      }
+
+      // Get the playthrough song
+      const playthroughSong = await playthroughSongRepo.getSongAtPosition(id, position);
+      if (!playthroughSong) {
+        return reply.status(404).send({ error: 'Song not found at position' });
+      }
+
+      // Find existing stats record
+      const stats = await playthroughSongStatsRepo.getForUserAndSong(userId, playthroughSong.id);
+      if (!stats) {
+        return reply.status(404).send({ error: 'Stats not found for this user and song' });
+      }
+
+      // Update the stats
+      const updated = await playthroughSongStatsRepo.update(stats.id, updates);
+
+      return updated;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.status(400).send({ error: 'Validation error', details: error.issues });
+      }
+      throw error;
+    }
+  });
 };
 
 export default playthroughRoutes;

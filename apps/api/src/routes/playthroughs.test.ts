@@ -271,4 +271,113 @@ describe('Playthrough Routes', () => {
       await pool.query('DELETE FROM users WHERE id = $1', [otherUser.id]);
     });
   });
+
+  describe('PATCH /playthroughs/:id/songs/:position/stats/:userId', () => {
+    it('updates stats for a player', async () => {
+      // Add player to playthrough
+      await playthroughPlayerRepo.addPlayer({
+        playthroughId: testPlaythroughId,
+        userId: testUserId,
+        instrument: 'drums',
+        difficulty: 'expert',
+        isProMode: false,
+      });
+
+      // Finish playthrough
+      await playthroughRepo.finish(testPlaythroughId);
+
+      // Get playthrough songs
+      const songs = await playthroughSongRepo.getSongs(testPlaythroughId);
+
+      // Create stats for first song
+      const stats = await playthroughSongStatsRepo.create({
+        playthroughSongId: songs[0].id,
+        userId: testUserId,
+        score: 100000,
+      });
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/playthroughs/${testPlaythroughId}/songs/0/stats/${testUserId}`,
+        headers: { authorization: `Bearer ${userToken}` },
+        payload: {
+          score: 150000,
+          accuracyPct: 99.5,
+          starsEarned: 6,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.score).toBe(150000);
+      expect(body.accuracyPct).toBe(99.5);
+      expect(body.starsEarned).toBe(6);
+    });
+
+    it('validates stars earned range (1-6)', async () => {
+      // Add player to playthrough
+      await playthroughPlayerRepo.addPlayer({
+        playthroughId: testPlaythroughId,
+        userId: testUserId,
+        instrument: 'drums',
+        difficulty: 'expert',
+        isProMode: false,
+      });
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/playthroughs/${testPlaythroughId}/songs/0/stats/${testUserId}`,
+        headers: { authorization: `Bearer ${userToken}` },
+        payload: { starsEarned: 7 },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('validates accuracy range (0-100)', async () => {
+      // Add player to playthrough
+      await playthroughPlayerRepo.addPlayer({
+        playthroughId: testPlaythroughId,
+        userId: testUserId,
+        instrument: 'drums',
+        difficulty: 'expert',
+        isProMode: false,
+      });
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/playthroughs/${testPlaythroughId}/songs/0/stats/${testUserId}`,
+        headers: { authorization: `Bearer ${userToken}` },
+        payload: { accuracyPct: 150 },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('requires participant authorization', async () => {
+      const otherUser = await userRepo.create({
+        username: `playthrough_other_user2_${Date.now()}`,
+        passwordHash: 'hash',
+        displayName: 'Other User',
+        isAdmin: false,
+      });
+
+      const otherUserToken = app.jwt.sign({
+        userId: otherUser.id,
+        isAdmin: false,
+      });
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/playthroughs/${testPlaythroughId}/songs/0/stats/${testUserId}`,
+        headers: { authorization: `Bearer ${otherUserToken}` },
+        payload: { score: 150000 },
+      });
+
+      expect(response.statusCode).toBe(403);
+
+      // Clean up
+      await pool.query('DELETE FROM users WHERE id = $1', [otherUser.id]);
+    });
+  });
 });
