@@ -89,3 +89,72 @@ export async function uploadScreenshot(playthroughId: number, position: number, 
     body: formData,
   });
 }
+
+export interface PlaythroughSummary {
+  playthrough: Playthrough;
+  setlist: { id: number; name: string } | null;
+  players: Array<{
+    userId: number;
+    username: string;
+    displayName: string;
+    instrument: Instrument;
+    difficulty: Difficulty;
+    isProMode: boolean;
+  }>;
+  songs: Array<{
+    position: number;
+    song: Song;
+    screenshotPath: string | null;
+    ocrStatus: 'completed' | 'pending' | 'failed' | null;
+    ratings: Array<{
+      userId: number;
+      username: string;
+      rating: number;
+    }>;
+    stats: Array<{
+      userId: number;
+      username: string;
+      score: number | null;
+      accuracyPct: number | null;
+      notesHit: number | null;
+      notesMissed: number | null;
+      longestStreak: number | null;
+      starsEarned: number | null;
+    }>;
+  }>;
+}
+
+export async function getPlaythroughSummary(id: number): Promise<PlaythroughSummary> {
+  return apiRequest<PlaythroughSummary>(`/playthroughs/${id}/summary`, {
+    authenticated: true,
+  });
+}
+
+export interface UpdateStatsRequest {
+  score?: number;
+  accuracyPct?: number;
+  notesHit?: number;
+  notesMissed?: number;
+  longestStreak?: number;
+  starsEarned?: number;
+}
+
+export async function updateStats(
+  playthroughId: number,
+  position: number,
+  userId: number,
+  updates: UpdateStatsRequest
+): Promise<void> {
+  await apiRequest(`/playthroughs/${playthroughId}/songs/${position}/stats/${userId}`, {
+    method: 'PATCH',
+    authenticated: true,
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function retryOCR(playthroughId: number, position: number): Promise<void> {
+  await apiRequest(`/playthroughs/${playthroughId}/songs/${position}/retry-ocr`, {
+    method: 'POST',
+    authenticated: true,
+  });
+}
