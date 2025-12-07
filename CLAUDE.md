@@ -12,6 +12,12 @@ Bearded Nemesis is a Rock Band 4 setlist management application. It helps users 
 
 This is a pnpm workspace monorepo. Using npm will break the workspace symlinks and cause dependency resolution issues. Always use `pnpm` for all package operations.
 
+## Git Workflow
+
+**WORK DIRECTLY ON MAIN BRANCH UNTIL INSTRUCTED OTHERWISE.**
+
+This project is in initial development. Do not create feature branches or worktrees unless specifically requested. Commit directly to main.
+
 ## Architecture
 
 **Monorepo structure using pnpm workspaces:**
