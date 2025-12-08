@@ -65,3 +65,14 @@ export async function screenshotExists(filepath: string): Promise<boolean> {
 export function getScreenshotsDir(): string {
   return SCREENSHOTS_DIR;
 }
+
+/**
+ * Convert filesystem screenshot path to HTTP URL path.
+ *
+ * @param filepath - Full filesystem path to screenshot
+ * @returns URL path for accessing the screenshot via HTTP (e.g., /screenshots/filename.jpg)
+ */
+export function getScreenshotUrl(filepath: string): string {
+  const filename = path.basename(filepath);
+  return `/screenshots/${filename}`;
+}

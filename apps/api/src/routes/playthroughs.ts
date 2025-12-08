@@ -188,7 +188,9 @@ const playthroughRoutes: FastifyPluginAsync = async (app) => {
       return {
         position: ps.position,
         song: song!,
-        screenshotPath: ps.screenshotPath,
+        screenshotPath: ps.screenshotPath
+          ? screenshotService.getScreenshotUrl(ps.screenshotPath)
+          : null,
         ocrStatus: ps.ocrStatus,
         ratings,
         stats,
@@ -496,7 +498,7 @@ const playthroughRoutes: FastifyPluginAsync = async (app) => {
 
       return {
         success: true,
-        screenshotPath,
+        screenshotPath: screenshotService.getScreenshotUrl(screenshotPath),
         message: 'Screenshot uploaded. OCR processing started.',
       };
     } catch (error) {

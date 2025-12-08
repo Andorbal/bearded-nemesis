@@ -79,6 +79,13 @@ await app.register(fastifyStatic, {
   prefix: '/',
 });
 
+// Register static file serving for screenshots
+await app.register(fastifyStatic, {
+  root: path.join(__dirname, '..', '..', '..', 'screenshots'),
+  prefix: '/screenshots/',
+  decorateReply: false, // Don't override the decorator from previous registration
+});
+
 // Register routes
 await app.register(authRoutes, { prefix: '/auth' });
 await app.register(songRoutes, { prefix: '/songs' });

@@ -32,6 +32,8 @@ export class WsPlaythroughService {
   public currentState: Writable<PlaythroughState | null> = writable(null);
   public pendingRating: Writable<PendingRating | null> = writable(null);
   public lastError: Writable<string | null> = writable(null);
+  public screenshotUploaded: Writable<{ position: number } | null> = writable(null);
+  public ocrCompleted: Writable<{ position: number; playersMatched: number } | null> = writable(null);
 
   constructor(playthroughId: number, token: string, wsBaseUrl?: string) {
     this.playthroughId = playthroughId;
@@ -218,6 +220,16 @@ export class WsPlaythroughService {
             players: state.players.filter(p => p !== message.user),
           };
         });
+        break;
+
+      case 'screenshot_uploaded':
+        console.log('[WS] Screenshot uploaded for position:', message.position);
+        this.screenshotUploaded.set({ position: message.position });
+        break;
+
+      case 'ocr_completed':
+        console.log('[WS] OCR completed for position:', message.position, 'players matched:', message.playersMatched);
+        this.ocrCompleted.set({ position: message.position, playersMatched: message.playersMatched });
         break;
 
       case 'stats_captured':

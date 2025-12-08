@@ -13,6 +13,10 @@ export default defineConfig({
 			'/covers': {
 				target: 'http://localhost:3010',
 				changeOrigin: true
+			},
+			'/screenshots': {
+				target: 'http://localhost:3010',
+				changeOrigin: true
 			}
 		}
 	}
