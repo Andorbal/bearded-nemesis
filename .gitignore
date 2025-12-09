@@ -47,3 +47,6 @@ screenshots/
 original-prompt.md
 .claude/settings.local.json
 .devcontainer/allowed-domains.local.txt
+
+# Working documents and scratch files
+docs/working/
