@@ -45,6 +45,8 @@ const updateStatsSchema = z.object({
   notesMissed: z.number().min(0).optional(),
   longestStreak: z.number().min(0).optional(),
   starsEarned: z.number().min(1).max(6).optional(),
+  difficulty: z.enum(DIFFICULTIES).optional(),
+  avgMultiplier: z.number().min(0).optional(),
 });
 
 const statsUserIdSchema = z.object({
