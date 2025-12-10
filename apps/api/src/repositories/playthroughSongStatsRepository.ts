@@ -141,6 +141,14 @@ export async function update(
     sets.push(`accuracy_pct = $${paramIndex++}`);
     values.push(data.accuracyPct);
   }
+  if (data.difficulty !== undefined) {
+    sets.push(`difficulty = $${paramIndex++}`);
+    values.push(data.difficulty);
+  }
+  if (data.avgMultiplier !== undefined) {
+    sets.push(`avg_multiplier = $${paramIndex++}`);
+    values.push(data.avgMultiplier);
+  }
   if (data.rating !== undefined) {
     sets.push(`rating = $${paramIndex++}`);
     values.push(data.rating);
