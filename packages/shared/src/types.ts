@@ -165,8 +165,10 @@ export interface PlaythroughSongStats {
   notesHit: number | null;
   notesMissed: number | null;
   longestStreak: number | null;
-  starsEarned: number | null; // game's 1-5
+  starsEarned: number | null; // game's 1-5 (or 6 for gold)
   accuracyPct: number | null;
+  difficulty: Difficulty | null;
+  avgMultiplier: number | null;
   rating: number | null; // user's enjoyment 1-5
   createdAt: Date;
 }
