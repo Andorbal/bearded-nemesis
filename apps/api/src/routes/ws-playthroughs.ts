@@ -179,11 +179,18 @@ async function buildPlaythroughState(playthroughId: number, currentPosition: num
     }
   }
 
-  // Get player usernames
-  const playerUsernames: string[] = [];
+  // Get player details with usernames
+  const playerDetails = [];
   for (const player of players) {
     const user = await userRepo.findById(player.userId);
-    if (user) playerUsernames.push(user.username);
+    if (user) {
+      playerDetails.push({
+        userId: player.userId,
+        username: user.username,
+        instrument: player.instrument,
+        difficulty: player.difficulty,
+      });
+    }
   }
 
   return {
@@ -191,7 +198,7 @@ async function buildPlaythroughState(playthroughId: number, currentPosition: num
     currentPosition,
     currentSong,
     songs,
-    players: playerUsernames,
+    players: playerDetails,
     ratingsThisSong,
   };
 }

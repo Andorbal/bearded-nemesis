@@ -202,24 +202,13 @@ export class WsPlaythroughService {
         break;
 
       case 'player_joined':
-        this.currentState.update(state => {
-          if (!state) return state;
-          if (state.players.includes(message.user)) return state;
-          return {
-            ...state,
-            players: [...state.players, message.user],
-          };
-        });
+        // Note: player_joined sends only username, but we don't use it for player list
+        // The full player list comes from state_sync
         break;
 
       case 'player_left':
-        this.currentState.update(state => {
-          if (!state) return state;
-          return {
-            ...state,
-            players: state.players.filter(p => p !== message.user),
-          };
-        });
+        // Note: player_left sends only username, but we don't use it for player list
+        // The full player list comes from state_sync
         break;
 
       case 'screenshot_uploaded':

@@ -201,12 +201,19 @@ export type WsServerMessage =
 export type WsClientMessage =
   | { type: 'submit_rating'; rating: number };
 
+export interface PlaythroughStatePlayer {
+  userId: number;
+  username: string;
+  instrument: Instrument;
+  difficulty: Difficulty;
+}
+
 export interface PlaythroughState {
   playthroughId: number;
   currentPosition: number;
   currentSong: Song;
   songs: Song[];
-  players: string[];
+  players: PlaythroughStatePlayer[];
   ratingsThisSong: Record<string, number>;
 }
 
