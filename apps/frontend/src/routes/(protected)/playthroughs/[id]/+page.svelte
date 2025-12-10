@@ -322,6 +322,21 @@
         {@const currentStats = summary?.songs
           .find(s => s.position === currentState.currentPosition)
           ?.stats.find(s => s.userId === $authStore.user.id)}
+
+        <!-- DEBUG INFO -->
+        <div class="card mb-6 bg-yellow-50 border-2 border-yellow-400">
+          <h3 class="font-semibold mb-2 text-yellow-800">DEBUG: Stats Form Visibility</h3>
+          <pre class="text-xs overflow-auto">{JSON.stringify({
+            hasCurrentState: !!currentState,
+            hasUser: !!$authStore.user,
+            userId: $authStore.user?.id,
+            playersInState: currentState?.players?.length,
+            players: currentState?.players?.map(p => ({ userId: p.userId, username: p.username, instrument: p.instrument })),
+            currentUserPlayer: currentUserPlayer ? { userId: currentUserPlayer.userId, instrument: currentUserPlayer.instrument } : null,
+            hasSummary: !!summary
+          }, null, 2)}</pre>
+        </div>
+
         {#if currentUserPlayer}
           <PlaythroughStatsForm
             playthroughId={playthroughId}
@@ -331,6 +346,10 @@
             previousSongDifficulty={prevSongDifficulty}
             existingStats={currentStats}
           />
+        {:else}
+          <div class="card mb-6 bg-red-50 border-2 border-red-400">
+            <p class="text-red-800">You are not a player in this playthrough. Only players can enter stats.</p>
+          </div>
         {/if}
       {/if}
 
