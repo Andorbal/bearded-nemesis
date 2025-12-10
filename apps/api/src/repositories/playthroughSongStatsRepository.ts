@@ -65,8 +65,8 @@ export async function create(data: CreateStatsData): Promise<PlaythroughSongStat
   const row = await queryOne<DbPlaythroughSongStats>(
     `INSERT INTO playthrough_song_stats
      (playthrough_song_id, user_id, score, notes_hit, notes_missed, longest_streak,
-      stars_earned, accuracy_pct, rating)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      stars_earned, accuracy_pct, difficulty, avg_multiplier, rating)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING *`,
     [
       data.playthroughSongId,
@@ -77,6 +77,8 @@ export async function create(data: CreateStatsData): Promise<PlaythroughSongStat
       data.longestStreak ?? null,
       data.starsEarned ?? null,
       data.accuracyPct ?? null,
+      data.difficulty ?? null,
+      data.avgMultiplier ?? null,
       data.rating ?? null,
     ]
   );
