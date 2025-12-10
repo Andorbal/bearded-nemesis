@@ -176,22 +176,28 @@ export async function findById(id: number): Promise<PlaythroughSongStats | null>
 
 interface DbStatsWithUsername {
   username: string;
+  user_id: number;
   score: number | null;
   accuracy_pct: string | null;
   notes_hit: number | null;
   notes_missed: number | null;
   longest_streak: number | null;
   stars_earned: number | null;
+  difficulty: string | null;
+  avg_multiplier: string | null;
 }
 
 export interface StatsWithUsername {
   username: string;
+  userId: number;
   score: number | null;
   accuracyPct: number | null;
   notesHit: number | null;
   notesMissed: number | null;
   longestStreak: number | null;
   starsEarned: number | null;
+  difficulty: string | null;
+  avgMultiplier: number | null;
 }
 
 /**
@@ -202,8 +208,8 @@ export async function getStatsWithUsernamesForPlaythroughSong(
   playthroughSongId: number
 ): Promise<StatsWithUsername[]> {
   const rows = await query<DbStatsWithUsername>(
-    `SELECT u.username, s.score, s.accuracy_pct, s.notes_hit, s.notes_missed,
-            s.longest_streak, s.stars_earned
+    `SELECT u.username, s.user_id, s.score, s.accuracy_pct, s.notes_hit, s.notes_missed,
+            s.longest_streak, s.stars_earned, s.difficulty, s.avg_multiplier
      FROM playthrough_song_stats s
      JOIN users u ON s.user_id = u.id
      WHERE s.playthrough_song_id = $1
@@ -213,12 +219,15 @@ export async function getStatsWithUsernamesForPlaythroughSong(
 
   return rows.map(row => ({
     username: row.username,
+    userId: row.user_id,
     score: row.score,
     accuracyPct: row.accuracy_pct ? parseFloat(row.accuracy_pct) : null,
     notesHit: row.notes_hit,
     notesMissed: row.notes_missed,
     longestStreak: row.longest_streak,
     starsEarned: row.stars_earned,
+    difficulty: row.difficulty,
+    avgMultiplier: row.avg_multiplier ? parseFloat(row.avg_multiplier) : null,
   }));
 }
 
