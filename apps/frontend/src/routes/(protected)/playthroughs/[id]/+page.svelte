@@ -11,6 +11,7 @@
   import DifficultyBadge from '$lib/components/DifficultyBadge.svelte';
   import PlaythroughSummaryHeader from '$lib/components/PlaythroughSummaryHeader.svelte';
   import PlaythroughSongCard from '$lib/components/PlaythroughSongCard.svelte';
+  import PlaythroughStatsForm from '$lib/components/PlaythroughStatsForm.svelte';
   import { toastStore } from '$lib/stores/toast';
 
   let loading = $state(true);
@@ -337,6 +338,27 @@
           />
         </div>
       </div>
+
+      <!-- My Stats Form -->
+      {#if currentState && $authStore.user}
+        {@const currentUserPlayer = currentState.players.find(p => p.userId === $authStore.user?.id)}
+        {@const prevSongDifficulty = summary && currentState.currentPosition > 0 ?
+          summary.songs.find(s => s.position === currentState.currentPosition - 1)
+            ?.stats.find(s => s.userId === $authStore.user?.id)?.difficulty : null}
+        {@const currentStats = summary?.songs
+          .find(s => s.position === currentState.currentPosition)
+          ?.stats.find(s => s.userId === $authStore.user.id)}
+        {#if currentUserPlayer}
+          <PlaythroughStatsForm
+            playthroughId={playthroughId}
+            position={currentState.currentPosition}
+            currentUserId={$authStore.user.id}
+            playerDifficulty={currentUserPlayer.difficulty}
+            previousSongDifficulty={prevSongDifficulty}
+            existingStats={currentStats}
+          />
+        {/if}
+      {/if}
 
       <!-- Screenshot Upload -->
       <div class="card mb-6">
