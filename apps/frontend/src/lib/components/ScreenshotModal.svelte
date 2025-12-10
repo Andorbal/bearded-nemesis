@@ -1,33 +1,12 @@
 <script lang="ts">
-  import { toastStore } from '$lib/stores/toast';
-  import * as playthroughsApi from '$lib/api/playthroughs';
-
   interface Props {
     screenshotPath: string;
     playthroughId: number;
     position: number;
     onClose: () => void;
-    onRerunOCR?: () => void;
   }
 
-  let { screenshotPath, playthroughId, position, onClose, onRerunOCR }: Props = $props();
-
-  let rerunning = $state(false);
-
-  async function handleRerunOCR() {
-    rerunning = true;
-    try {
-      await playthroughsApi.retryOCR(playthroughId, position);
-      toastStore.success('OCR retry started');
-      onRerunOCR?.();
-      onClose();
-    } catch (err) {
-      console.error('Failed to retry OCR:', err);
-      toastStore.error('Failed to retry OCR');
-    } finally {
-      rerunning = false;
-    }
-  }
+  let { screenshotPath, onClose }: Props = $props();
 </script>
 
 <!-- Modal overlay -->
@@ -41,12 +20,7 @@
 
     <img src={screenshotPath} alt="Playthrough screenshot" class="max-w-full mb-4" />
 
-    <div class="flex gap-2">
-      {#if onRerunOCR}
-        <button onclick={handleRerunOCR} class="btn btn-secondary" disabled={rerunning}>
-          {rerunning ? 'Processing...' : 'Re-run OCR'}
-        </button>
-      {/if}
+    <div class="flex justify-end">
       <button onclick={onClose} class="btn btn-primary">Close</button>
     </div>
   </div>

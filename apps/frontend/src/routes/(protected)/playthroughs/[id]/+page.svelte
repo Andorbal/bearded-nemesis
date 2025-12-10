@@ -94,22 +94,6 @@
       lastError = error;
     });
 
-    wsService.screenshotUploaded.subscribe(event => {
-      if (event) {
-        console.log('Screenshot uploaded event. Status:', playthrough?.status);
-        // Don't reload summary here - the optimistic update in handleFileUpload already set status to 'pending'
-        // We'll reload when OCR completes
-      }
-    });
-
-    wsService.ocrCompleted.subscribe(event => {
-      if (event) {
-        console.log('OCR completed event, reloading data. Status:', playthrough?.status, 'Players matched:', event.playersMatched);
-        // Load summary to get the latest stats/OCR data without disrupting UI
-        loadSummary();
-      }
-    });
-
     wsService.connect();
   }
 
@@ -183,18 +167,8 @@
     uploading = true;
     try {
       await playthroughsApi.uploadScreenshot(playthroughId, currentPosition, file);
-
-      // Optimistically update UI to show "Processing" and clear old stats
-      if (summary) {
-        summary = {
-          ...summary,
-          songs: summary.songs.map(song =>
-            song.position === currentPosition
-              ? { ...song, ocrStatus: 'pending', stats: [], screenshotPath: song.screenshotPath || 'uploading' }
-              : song
-          )
-        };
-      }
+      toastStore.success('Screenshot uploaded');
+      loadSummary(); // Reload to show new screenshot
     } catch (err) {
       console.error('Failed to upload screenshot:', err);
       toastStore.error('Failed to upload screenshot');
@@ -378,55 +352,6 @@
         >
           {uploading ? 'Uploading...' : 'Take/Upload Screenshot'}
         </button>
-
-        <!-- OCR Stats for Current Song -->
-        {#if summary}
-          {@const currentSongData = summary.songs.find(s => s.position === currentState?.currentPosition)}
-          {#if currentSongData && currentSongData.screenshotPath}
-            <div class="mt-4 pt-4 border-t">
-              <div class="flex items-center justify-between mb-3">
-                <h4 class="font-semibold text-sm">OCR Results</h4>
-                <span class={
-                  currentSongData.ocrStatus === 'completed' ? 'text-green-600' :
-                  currentSongData.ocrStatus === 'pending' ? 'text-yellow-600' :
-                  currentSongData.ocrStatus === 'failed' ? 'text-red-600' :
-                  'text-gray-400'
-                }>
-                  {currentSongData.ocrStatus === 'completed' ? '✓ Completed' :
-                   currentSongData.ocrStatus === 'pending' ? '⚠️ Processing...' :
-                   currentSongData.ocrStatus === 'failed' ? '✗ Failed' :
-                   'No screenshot'}
-                </span>
-              </div>
-
-              {#if currentSongData.stats.length > 0}
-                <div class="space-y-2">
-                  {#each currentSongData.stats as stat}
-                    <div class="bg-gray-50 p-2 rounded text-sm">
-                      <div class="font-medium mb-1">{stat.username}</div>
-                      <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                        {#if stat.score !== null}
-                          <div><span class="text-gray-600">Score:</span> {stat.score.toLocaleString()}</div>
-                        {/if}
-                        {#if stat.accuracyPct !== null}
-                          <div><span class="text-gray-600">Accuracy:</span> {stat.accuracyPct.toFixed(1)}%</div>
-                        {/if}
-                        {#if stat.starsEarned !== null}
-                          <div><span class="text-gray-600">Stars:</span> {'★'.repeat(stat.starsEarned)}</div>
-                        {/if}
-                        {#if stat.longestStreak !== null}
-                          <div><span class="text-gray-600">Streak:</span> {stat.longestStreak}</div>
-                        {/if}
-                      </div>
-                    </div>
-                  {/each}
-                </div>
-              {:else if currentSongData.ocrStatus === 'completed'}
-                <p class="text-sm text-gray-500">No players matched</p>
-              {/if}
-            </div>
-          {/if}
-        {/if}
       </div>
 
       <!-- Host Controls -->

@@ -24,25 +24,6 @@
       : null
   );
 
-  const ocrIcon = $derived(
-    songData.ocrStatus === 'completed' ? '✓' :
-    songData.ocrStatus === 'pending' ? '⚠️' :
-    songData.ocrStatus === 'failed' ? '✗' :
-    '○'
-  );
-
-  const ocrColor = $derived(
-    songData.ocrStatus === 'completed' ? 'text-green-600' :
-    songData.ocrStatus === 'pending' ? 'text-yellow-600' :
-    songData.ocrStatus === 'failed' ? 'text-red-600' :
-    'text-gray-400'
-  );
-
-  const hasIncompleteData = $derived(
-    songData.ratings.length < players.length ||
-    (songData.screenshotPath && songData.ocrStatus !== 'completed')
-  );
-
   async function handleSaveStats(userId: number, updates: any) {
     await playthroughsApi.updateStats(playthroughId, songData.position, userId, updates);
     editingUserId = null;
@@ -52,8 +33,6 @@
 
 <div
   class="card mb-4 cursor-pointer hover:bg-gray-50 transition-colors"
-  class:border-l-4={hasIncompleteData}
-  class:border-yellow-400={hasIncompleteData}
   onclick={() => expanded = !expanded}
 >
   <div class="flex items-center gap-4">
@@ -78,7 +57,6 @@
       {#if avgRating}
         <span class="text-yellow-500">Avg: {avgRating}★</span>
       {/if}
-      <span class={ocrColor}>{ocrIcon}</span>
     </div>
 
     <!-- Chevron -->
@@ -191,15 +169,15 @@
         <div class="text-gray-500 text-sm">No stats captured</div>
       {/if}
 
-      <!-- Screenshot & OCR -->
+      <!-- Screenshot -->
       <div>
-        <h3 class="font-semibold mb-3">Screenshot & OCR</h3>
+        <h3 class="font-semibold mb-3">Screenshot</h3>
         {#if songData.screenshotPath}
           <button
             class="text-blue-600 hover:underline"
             onclick={(e) => { e.stopPropagation(); showingScreenshot = true; }}
           >
-            Screenshot: <span class={ocrColor}>{ocrIcon}</span> View
+            View Screenshot
           </button>
         {:else}
           <p class="text-gray-500 text-sm">No screenshot uploaded</p>
@@ -215,6 +193,5 @@
     {playthroughId}
     position={songData.position}
     onClose={() => showingScreenshot = false}
-    onRerunOCR={onStatsUpdated}
   />
 {/if}
