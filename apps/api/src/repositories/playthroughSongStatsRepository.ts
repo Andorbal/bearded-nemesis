@@ -10,6 +10,8 @@ interface CreateStatsData {
   longestStreak?: number | null;
   starsEarned?: number | null;
   accuracyPct?: number | null;
+  difficulty?: string | null;
+  avgMultiplier?: number | null;
   rating?: number | null;
 }
 
@@ -20,6 +22,8 @@ interface UpdateStatsData {
   longestStreak?: number | null;
   starsEarned?: number | null;
   accuracyPct?: number | null;
+  difficulty?: string | null;
+  avgMultiplier?: number | null;
   rating?: number | null;
 }
 
@@ -33,6 +37,8 @@ interface DbPlaythroughSongStats {
   longest_streak: number | null;
   stars_earned: number | null;
   accuracy_pct: string | null;
+  difficulty: string | null;
+  avg_multiplier: string | null;
   rating: number | null;
   created_at: Date;
 }
