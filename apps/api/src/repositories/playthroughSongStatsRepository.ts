@@ -1,5 +1,5 @@
 import { query, queryOne } from '../db/pool.js';
-import type { PlaythroughSongStats } from '@bearded-nemesis/shared';
+import type { PlaythroughSongStats, Difficulty } from '@bearded-nemesis/shared';
 
 interface CreateStatsData {
   playthroughSongId: number;
@@ -54,6 +54,8 @@ function mapToStats(row: DbPlaythroughSongStats): PlaythroughSongStats {
     longestStreak: row.longest_streak,
     starsEarned: row.stars_earned,
     accuracyPct: row.accuracy_pct ? parseFloat(row.accuracy_pct) : null,
+    difficulty: row.difficulty as Difficulty | null,
+    avgMultiplier: row.avg_multiplier ? parseFloat(row.avg_multiplier) : null,
     rating: row.rating,
     createdAt: row.created_at,
   };
