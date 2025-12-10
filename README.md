@@ -66,6 +66,20 @@ Playthroughs are tracked sessions where one or more players work through a setli
 
 The song database was built from a combination of the [Rock Band 4 Spreadsheet](https://docs.google.com/spreadsheets/d/1gQaNlXOMxGxTt1LRs1y8pQpc3PwNvgeM9DCRqfjqAZw/edit?pli=1&gid=0#gid=0) maintained by the community and [rb4.app](https://rb4.app/).
 
+## Component Development with Storybook
+
+Storybook is available for developing and testing UI components in isolation. This is particularly useful for iterating on component design without running the full application.
+
+```bash
+# Start Storybook dev server
+pnpm --filter @bearded-nemesis/frontend story:dev  # Opens at http://localhost:6006
+
+# Build static Storybook site
+pnpm --filter @bearded-nemesis/frontend story:build
+```
+
+Stories are colocated with components using the `.stories.ts` naming convention (e.g., `DifficultyBadge.stories.ts`). Storybook automatically picks up all Tailwind styles and SvelteKit aliases.
+
 ## Development
 
 For detailed development commands, testing patterns, and environment configuration, see [CLAUDE.md](CLAUDE.md). That file serves as both AI assistant guidance and a comprehensive development reference.
