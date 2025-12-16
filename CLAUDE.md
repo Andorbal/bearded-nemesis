@@ -14,9 +14,14 @@ This is a pnpm workspace monorepo. Using npm will break the workspace symlinks a
 
 ## Git Workflow
 
-**WORK DIRECTLY ON MAIN BRANCH UNTIL INSTRUCTED OTHERWISE.**
+**This project uses the `benzhaus` plugin workflow:**
 
-This project is in initial development. Do not create feature branches or worktrees unless specifically requested. Commit directly to main.
+- Use the `start-work` skill to begin new features or bug fixes (creates isolated git worktrees)
+- Follow the TDD implementation cycle (RED-GREEN-REFACTOR with code review gates)
+- All work requires a merge request/pull request (never commit directly to main)
+- Use the `finishing-a-development-branch` skill when work is complete
+
+See the global `~/.claude/CLAUDE.md` for complete workflow documentation.
 
 ## Architecture
 
@@ -119,4 +124,3 @@ pnpm --filter @bearded-nemesis/api test songRepository
 - PostgreSQL 16 via Docker
 - Migrations in `apps/api/src/db/migrations/` (sequential SQL files)
 - Simple migration runner tracks applied migrations in `migrations` table
-- When you commit changes, use "Claude" as your name and "noreply@anthropic.com" as your email address.

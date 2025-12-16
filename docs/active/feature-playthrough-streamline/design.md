@@ -1,8 +1,14 @@
-# Playthrough Streamline - Design Document
+---
+title: Playthrough Streamline
+type: feature
+status: active
+created_date: 2025-12-09
+started_date: 2025-12-09
+repositories:
+  - bearded-nemesis
+---
 
-**Date:** 2025-12-09
-**Status:** Approved for Implementation
-**Related Planning Doc:** [docs/planning/2025-12-09-playthrough-streamline.md](../planning/2025-12-09-playthrough-streamline.md)
+# Playthrough Streamline - Design Document
 
 ## Overview
 

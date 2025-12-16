@@ -1,6 +1,10 @@
-# Playthrough Streamline Implementation Plan
+---
+title: Playthrough Streamline - Implementation Plan
+type: feature
+status: active
+---
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+# Playthrough Streamline Implementation Plan
 
 **Goal:** Remove OCR from active playthrough workflow and implement mobile-optimized manual stats entry with auto-save.
 

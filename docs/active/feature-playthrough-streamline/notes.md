@@ -1,3 +1,9 @@
+---
+title: Playthrough Streamline - Notes
+type: feature
+status: active
+---
+
 # Streamline the playthrough workflow
 
 I feel like we've spent a lot of time trying to get the OCR working well but it's just not there yet.  I would like the app to be useful sooner rather than later so I would like to change course for a bit.
