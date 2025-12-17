@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
-import { startPlaythrough, rateSong, enterStats, advanceToNextSong, finishPlaythrough } from './helpers/playthrough';
+import { createTestSetlist } from './helpers/setlists';
+import { startPlaythrough, rateSong, enterStats, advanceToNextSong, finishPlaythrough } from './helpers/playthroughs';
 
 /**
  * E2E Specs: Manual Stats Entry During Active Playthrough
@@ -9,17 +10,20 @@ import { startPlaythrough, rateSong, enterStats, advanceToNextSong, finishPlayth
  */
 
 test.describe('Manual Stats Entry Workflow', () => {
+  let testSetlistName: string;
+
   test.beforeEach(async ({ page }) => {
     // Login as test user
     await login(page);
 
-    // TODO: Set up test data (create setlist with 3+ songs)
-    // This might need to be done via API or database seeding
+    // Create test setlist with 3 songs
+    const setlist = await createTestSetlist(page, { songCount: 3 });
+    testSetlistName = setlist.name;
   });
 
   test('Scenario 1: Entering stats for the first song', async ({ page }) => {
     // Given I am logged in and have started a playthrough
-    await startPlaythrough(page, 'Test Setlist', 'expert');
+    await startPlaythrough(page, testSetlistName, [{ instrument: 'drums', difficulty: 'expert' }]);
 
     // And I have rated the song 4 stars
     await rateSong(page, 4);
@@ -48,7 +52,7 @@ test.describe('Manual Stats Entry Workflow', () => {
 
   test('Scenario 2: Auto-save behavior', async ({ page }) => {
     // Given I am on the "My Stats" form
-    await startPlaythrough(page, 'Test Setlist', 'expert');
+    await startPlaythrough(page, testSetlistName, [{ instrument: 'drums', difficulty: 'expert' }]);
     const statsForm = page.locator('text=My Stats').locator('..');
 
     // When I enter "95.5" in the "Completion" field
@@ -87,7 +91,7 @@ test.describe('Manual Stats Entry Workflow', () => {
 
   test('Scenario 3: Star rating with gold stars', async ({ page }) => {
     // Given I am on the "My Stats" form
-    await startPlaythrough(page, 'Test Setlist', 'expert');
+    await startPlaythrough(page, testSetlistName, [{ instrument: 'drums', difficulty: 'expert' }]);
     const statsForm = page.locator('text=My Stats').locator('..');
     const starSection = statsForm.locator('text=Stars').locator('..');
 
@@ -145,7 +149,7 @@ test.describe('Manual Stats Entry Workflow', () => {
 
   test('Scenario 4: Field navigation with Enter key', async ({ page }) => {
     // Given I am on the "My Stats" form
-    await startPlaythrough(page, 'Test Setlist', 'expert');
+    await startPlaythrough(page, testSetlistName, [{ instrument: 'drums', difficulty: 'expert' }]);
     const statsForm = page.locator('text=My Stats').locator('..');
 
     // And I am focused on the "Completion" field
@@ -190,7 +194,7 @@ test.describe('Manual Stats Entry Workflow', () => {
 
   test('Scenario 6: Difficulty defaults to previous song', async ({ page }) => {
     // Given I completed the first song with "expert" difficulty
-    await startPlaythrough(page, 'Test Setlist', 'expert');
+    await startPlaythrough(page, testSetlistName, [{ instrument: 'drums', difficulty: 'expert' }]);
     const statsForm = page.locator('text=My Stats').locator('..');
 
     // Verify difficulty is "expert"
@@ -235,7 +239,7 @@ test.describe('Manual Stats Entry Workflow', () => {
 
   test('Scenario 7: Pre-filled stats (editing existing stats)', async ({ page }) => {
     // Given I previously entered stats for the current song
-    await startPlaythrough(page, 'Test Setlist', 'expert');
+    await startPlaythrough(page, testSetlistName, [{ instrument: 'drums', difficulty: 'expert' }]);
 
     // Enter stats
     await enterStats(page, {
@@ -276,7 +280,7 @@ test.describe('Manual Stats Entry Workflow', () => {
 
   test('Scenario 10: Screenshot upload still works (no OCR)', async ({ page }) => {
     // Given I am on an active playthrough song
-    await startPlaythrough(page, 'Test Setlist', 'expert');
+    await startPlaythrough(page, testSetlistName, [{ instrument: 'drums', difficulty: 'expert' }]);
 
     // And I have entered my stats
     await enterStats(page, {
@@ -312,7 +316,7 @@ test.describe('Manual Stats Entry Workflow', () => {
 
   test('Scenario 11: Viewing saved stats in playthrough summary', async ({ page }) => {
     // Given I have completed a playthrough
-    await startPlaythrough(page, 'Test Setlist', 'expert');
+    await startPlaythrough(page, testSetlistName, [{ instrument: 'drums', difficulty: 'expert' }]);
 
     // Song 1 - Expert
     await enterStats(page, {
@@ -373,11 +377,20 @@ test.describe('Manual Stats Entry Workflow', () => {
 
 test.describe('Mobile-Specific Behavior', () => {
   // Inherits mobile project config (iPhone 17 Pro: 430x932)
+  let testSetlistName: string;
+
+  test.beforeEach(async ({ page }) => {
+    // Login as test user
+    await login(page);
+
+    // Create test setlist with 3 songs
+    const setlist = await createTestSetlist(page, { songCount: 3 });
+    testSetlistName = setlist.name;
+  });
 
   test('Scenario 5: Mobile numeric keyboard behavior', async ({ page }) => {
-    // Given I am on a mobile device
-    await login(page);
-    await startPlaythrough(page, 'Test Setlist', 'expert');
+    // Given I am on a mobile device and have started a playthrough
+    await startPlaythrough(page, testSetlistName, [{ instrument: 'drums', difficulty: 'expert' }]);
 
     const statsForm = page.locator('text=My Stats').locator('..');
 
@@ -407,9 +420,8 @@ test.describe('Mobile-Specific Behavior', () => {
   });
 
   test('Mobile tap targets are accessible', async ({ page }) => {
-    // Given I am on a mobile device
-    await login(page);
-    await startPlaythrough(page, 'Test Setlist', 'expert');
+    // Given I am on a mobile device and have started a playthrough
+    await startPlaythrough(page, testSetlistName, [{ instrument: 'drums', difficulty: 'expert' }]);
 
     const statsForm = page.locator('text=My Stats').locator('..');
 
