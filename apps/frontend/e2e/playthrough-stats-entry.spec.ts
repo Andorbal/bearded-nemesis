@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
-import { startPlaythrough, rateSong, enterStats, advanceToNextSong, finishPlaythrough } from './helpers/playthrough';
+import { startPlaythrough, rateSong, enterStats, advanceToNextSong, finishPlaythrough } from './helpers/playthroughs';
 
 /**
  * E2E Specs: Manual Stats Entry During Active Playthrough
