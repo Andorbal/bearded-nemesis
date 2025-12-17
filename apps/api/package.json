@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
+    "db:seed:e2e": "tsx src/db/seed-e2e.ts",
     "db:reset": "tsx src/db/reset.ts",
     "db:import-songs": "tsx src/db/import-songs.ts"
   },

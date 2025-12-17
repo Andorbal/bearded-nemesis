@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import { browser } from '$app/environment';
   import { authStore } from '$lib/stores/auth';
   import * as playthroughsApi from '$lib/api/playthroughs';
   import { createWsPlaythroughService, type ConnectionStatus } from '$lib/services/wsPlaythroughService';
@@ -102,17 +103,21 @@
     loadSummary(); // Load summary for all playthroughs to show existing OCR data
     connectWebSocket();
 
-    // Handle visibility change (screen wake)
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Handle visibility change (screen wake) - only in browser
+    if (browser) {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
   });
 
   onDestroy(() => {
     wsService?.disconnect();
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    if (browser) {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
   });
 
   function handleVisibilityChange() {
-    if (document.visibilityState === 'visible' && wsService) {
+    if (browser && document.visibilityState === 'visible' && wsService) {
       wsService.reconnect();
     }
   }
