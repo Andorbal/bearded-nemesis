@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { createTestSetlist } from './helpers/setlists';
-import { startPlaythrough, rateSong, enterStats, advanceToNextSong, finishPlaythrough } from './helpers/playthroughs';
+import { startPlaythrough, rateSong, enterStats, advanceToNextSong, finishPlaythrough, getInputByLabel, getSelectByLabel } from './helpers/playthroughs';
 
 /**
  * E2E Specs: Manual Stats Entry During Active Playthrough
@@ -33,21 +33,21 @@ test.describe('Manual Stats Entry Workflow', () => {
     await statsForm.scrollIntoViewIfNeeded();
 
     // Then I should see 8 input fields in correct order
-    await expect(statsForm.getByLabel('Completion')).toBeVisible();
-    await expect(statsForm.getByLabel('Skill Level')).toBeVisible();
-    await expect(statsForm.getByLabel('Score')).toBeVisible();
+    await expect(getInputByLabel(statsForm, 'Completion')).toBeVisible();
+    await expect(getSelectByLabel(statsForm, 'Skill Level')).toBeVisible();
+    await expect(getInputByLabel(statsForm, 'Score')).toBeVisible();
     await expect(statsForm.locator('text=Stars')).toBeVisible();
-    await expect(statsForm.getByLabel('Longest Streak')).toBeVisible();
-    await expect(statsForm.getByLabel('Notes Hit')).toBeVisible();
-    await expect(statsForm.getByLabel('Notes Missed')).toBeVisible();
-    await expect(statsForm.getByLabel('Avg. Multiplier')).toBeVisible();
+    await expect(getInputByLabel(statsForm, 'Longest Streak')).toBeVisible();
+    await expect(getInputByLabel(statsForm, 'Notes Hit')).toBeVisible();
+    await expect(getInputByLabel(statsForm, 'Notes Missed')).toBeVisible();
+    await expect(getInputByLabel(statsForm, 'Avg. Multiplier')).toBeVisible();
 
     // And the "Skill Level" dropdown should default to "expert"
-    await expect(statsForm.getByLabel('Skill Level')).toHaveValue('expert');
+    await expect(getSelectByLabel(statsForm, 'Skill Level')).toHaveValue('expert');
 
     // And all other fields should be empty
-    await expect(statsForm.getByLabel('Completion')).toHaveValue('');
-    await expect(statsForm.getByLabel('Score')).toHaveValue('');
+    await expect(getInputByLabel(statsForm, 'Completion')).toHaveValue('');
+    await expect(getInputByLabel(statsForm, 'Score')).toHaveValue('');
   });
 
   test('Scenario 2: Auto-save behavior', async ({ page }) => {
@@ -56,10 +56,10 @@ test.describe('Manual Stats Entry Workflow', () => {
     const statsForm = page.locator('text=My Stats').locator('..');
 
     // When I enter "95.5" in the "Completion" field
-    await statsForm.getByLabel('Completion').fill('95.5');
+    await getInputByLabel(statsForm, 'Completion').fill('95.5');
 
     // And I move focus to the next field (tab or tap)
-    await statsForm.getByLabel('Completion').blur();
+    await getInputByLabel(statsForm, 'Completion').blur();
 
     // Wait for auto-save (check network request)
     await page.waitForResponse(response =>
@@ -69,16 +69,16 @@ test.describe('Manual Stats Entry Workflow', () => {
     // Then the completion percentage should be saved immediately
     // Refresh the page to verify persistence
     await page.reload();
-    await expect(statsForm.getByLabel('Completion')).toHaveValue('95.5');
+    await expect(getInputByLabel(statsForm, 'Completion')).toHaveValue('95.5');
 
     // And I should see no error messages
     await expect(page.locator('text=Failed to save')).not.toBeVisible();
 
     // When I enter "150000" in the "Score" field
-    await statsForm.getByLabel('Score').fill('150000');
+    await getInputByLabel(statsForm, 'Score').fill('150000');
 
     // And I tap outside the field
-    await statsForm.getByLabel('Longest Streak').click();
+    await getInputByLabel(statsForm, 'Longest Streak').click();
 
     // Then the score should be saved immediately
     await page.waitForResponse(response =>
@@ -153,11 +153,11 @@ test.describe('Manual Stats Entry Workflow', () => {
     const statsForm = page.locator('text=My Stats').locator('..');
 
     // And I am focused on the "Completion" field
-    await statsForm.getByLabel('Completion').focus();
+    await getInputByLabel(statsForm, 'Completion').focus();
 
     // When I type "95" and press Enter
-    await statsForm.getByLabel('Completion').fill('95');
-    await statsForm.getByLabel('Completion').press('Enter');
+    await getInputByLabel(statsForm, 'Completion').fill('95');
+    await getInputByLabel(statsForm, 'Completion').press('Enter');
 
     // Then the value should be saved
     await page.waitForResponse(response =>
@@ -165,11 +165,11 @@ test.describe('Manual Stats Entry Workflow', () => {
     );
 
     // And focus should move to the "Skill Level" dropdown
-    await expect(statsForm.getByLabel('Skill Level')).toBeFocused();
+    await expect(getSelectByLabel(statsForm, 'Skill Level')).toBeFocused();
 
     // When I select "hard" and press Tab
-    await statsForm.getByLabel('Skill Level').selectOption('hard');
-    await statsForm.getByLabel('Skill Level').press('Tab');
+    await getSelectByLabel(statsForm, 'Skill Level').selectOption('hard');
+    await getSelectByLabel(statsForm, 'Skill Level').press('Tab');
 
     // Then the value should be saved
     await page.waitForResponse(response =>
@@ -177,11 +177,11 @@ test.describe('Manual Stats Entry Workflow', () => {
     );
 
     // And focus should move to the "Score" field
-    await expect(statsForm.getByLabel('Score')).toBeFocused();
+    await expect(getInputByLabel(statsForm, 'Score')).toBeFocused();
 
     // When I type "120000" and press Enter
-    await statsForm.getByLabel('Score').fill('120000');
-    await statsForm.getByLabel('Score').press('Enter');
+    await getInputByLabel(statsForm, 'Score').fill('120000');
+    await getInputByLabel(statsForm, 'Score').press('Enter');
 
     // Then the value should be saved
     await page.waitForResponse(response =>
@@ -198,7 +198,7 @@ test.describe('Manual Stats Entry Workflow', () => {
     const statsForm = page.locator('text=My Stats').locator('..');
 
     // Verify difficulty is "expert"
-    await expect(statsForm.getByLabel('Skill Level')).toHaveValue('expert');
+    await expect(getSelectByLabel(statsForm, 'Skill Level')).toHaveValue('expert');
 
     // And I entered stats for the first song
     await enterStats(page, {
@@ -214,10 +214,10 @@ test.describe('Manual Stats Entry Workflow', () => {
     const statsFormSong2 = page.locator('text=My Stats').locator('..');
 
     // Then the "Skill Level" should default to "expert"
-    await expect(statsFormSong2.getByLabel('Skill Level')).toHaveValue('expert');
+    await expect(getSelectByLabel(statsFormSong2, 'Skill Level')).toHaveValue('expert');
 
     // When I change the skill level to "hard"
-    await statsFormSong2.getByLabel('Skill Level').selectOption('hard');
+    await getSelectByLabel(statsFormSong2, 'Skill Level').selectOption('hard');
     await page.waitForResponse(response =>
       response.url().includes('/stats') && response.status() === 200
     );
@@ -261,10 +261,10 @@ test.describe('Manual Stats Entry Workflow', () => {
     const statsForm = page.locator('text=My Stats').locator('..');
 
     // Then all fields should be pre-filled with the saved values
-    await expect(statsForm.getByLabel('Completion')).toHaveValue('95.5');
-    await expect(statsForm.getByLabel('Skill Level')).toHaveValue('expert');
-    await expect(statsForm.getByLabel('Score')).toHaveValue('150000');
-    await expect(statsForm.getByLabel('Longest Streak')).toHaveValue('145');
+    await expect(getInputByLabel(statsForm, 'Completion')).toHaveValue('95.5');
+    await expect(getSelectByLabel(statsForm, 'Skill Level')).toHaveValue('expert');
+    await expect(getInputByLabel(statsForm, 'Score')).toHaveValue('150000');
+    await expect(getInputByLabel(statsForm, 'Longest Streak')).toHaveValue('145');
     await expect(statsForm.getByLabel('Notes Hit')).toHaveValue('523');
     await expect(statsForm.getByLabel('Notes Missed')).toHaveValue('12');
     await expect(statsForm.getByLabel('Avg. Multiplier')).toHaveValue('3.9');
@@ -395,7 +395,7 @@ test.describe('Mobile-Specific Behavior', () => {
     const statsForm = page.locator('text=My Stats').locator('..');
 
     // When I tap the "Completion" field
-    const completionField = statsForm.getByLabel('Completion');
+    const completionField = getInputByLabel(statsForm, 'Completion');
     await completionField.click();
 
     // Then the mobile numeric keyboard should appear
@@ -403,7 +403,7 @@ test.describe('Mobile-Specific Behavior', () => {
     await expect(completionField).toHaveAttribute('inputmode', 'decimal');
 
     // When I tap the "Score" field
-    const scoreField = statsForm.getByLabel('Score');
+    const scoreField = getInputByLabel(statsForm, 'Score');
     await scoreField.click();
 
     // Then the mobile numeric keyboard should appear
@@ -426,7 +426,7 @@ test.describe('Mobile-Specific Behavior', () => {
     const statsForm = page.locator('text=My Stats').locator('..');
 
     // Verify all inputs have minimum 44px height (iOS guideline)
-    const completionField = statsForm.getByLabel('Completion');
+    const completionField = getInputByLabel(statsForm, 'Completion');
     const box = await completionField.boundingBox();
     expect(box?.height).toBeGreaterThanOrEqual(44);
 

@@ -22,23 +22,25 @@ export async function createTestSetlist(
 
   // Navigate to setlist creation
   await page.goto('/setlists');
+  await page.waitForLoadState('networkidle');
 
-  // Click "+ Manual Setlist" button
+  // Click "+ Manual Setlist" button and wait for navigation
   const createButton = page.locator('button:has-text("+ Manual Setlist")');
-  await createButton.click();
-
-  // Wait for form to load
-  await page.waitForURL(/\/setlists\/new/);
+  await expect(createButton).toBeVisible();
+  await Promise.all([
+    page.waitForURL(/\/setlists\/new/),
+    createButton.click()
+  ]);
 
   // Fill in name (using id selector)
   await page.fill('#name', setlistName);
 
-  // Click "Create Setlist" button
+  // Click "Create Setlist" button and wait for navigation
   const saveButton = page.locator('button:has-text("Create Setlist")');
-  await saveButton.click();
-
-  // Wait for redirect to setlist detail page
-  await page.waitForURL(/\/setlists\/\d+/, { timeout: 10000 });
+  await Promise.all([
+    page.waitForURL(/\/setlists\/\d+/, { timeout: 10000 }),
+    saveButton.click()
+  ]);
 
   // Add songs to the setlist on the detail page
   if (songCount > 0) {

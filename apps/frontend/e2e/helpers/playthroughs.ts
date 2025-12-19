@@ -69,11 +69,18 @@ export async function startPlaythrough(
     }
   }
 
-  // Click "Start Playthrough" button
-  await page.click('button:has-text("Start Playthrough")');
+  // Click "Start Playthrough" button and wait for navigation
+  await Promise.all([
+    page.waitForURL(/\/playthroughs\/\d+/),
+    page.click('button:has-text("Start Playthrough")')
+  ]);
 
-  // Wait for redirect to active playthrough page
-  await page.waitForURL(/\/playthroughs\/\d+/);
+  // Wait for playthrough page to fully load
+  await page.waitForLoadState('networkidle');
+
+  // Wait for WebSocket connection and UI to be ready
+  await expect(page.locator('text=Connected')).toBeVisible();
+  await expect(page.locator('text=Rate This Song')).toBeVisible();
 }
 
 /**
@@ -109,12 +116,28 @@ export async function verifyPlaythroughStarted(page: Page, options: {
 // These are kept for compatibility with the paused stats entry tests
 
 export async function rateSong(page: Page, rating: number) {
-  // Assuming rating is in a "My Rating" section
-  const ratingSection = page.locator('text=My Rating').locator('..');
+  // Find the rating section by the "Rate This Song" text
+  const ratingSection = page.locator('text=Rate This Song').locator('..');
   const stars = ratingSection.locator('button[type="button"]');
 
   // Click the nth star (1-indexed)
   await stars.nth(rating - 1).click();
+}
+
+/**
+ * Helper to find an input field by its label text
+ * Works with NumberInput component that doesn't use for/id association
+ */
+export function getInputByLabel(page: Page | ReturnType<Page['locator']>, labelText: string) {
+  // Find the label containing the text, then get its parent (the NumberInput wrapper), and find the input inside
+  return page.locator(`label:has-text("${labelText}")`).locator('..').locator('input');
+}
+
+/**
+ * Helper to find a select field by its label text
+ */
+export function getSelectByLabel(page: Page | ReturnType<Page['locator']>, labelText: string) {
+  return page.locator(`label:has-text("${labelText}")`).locator('..').locator('select');
 }
 
 export async function enterStats(page: Page, stats: {
@@ -131,19 +154,22 @@ export async function enterStats(page: Page, stats: {
   const form = page.locator('text=My Stats').locator('..');
 
   if (stats.completion !== undefined) {
-    await form.getByLabel('Completion').fill(stats.completion.toString());
-    await form.getByLabel('Completion').blur();
+    const input = getInputByLabel(form, 'Completion');
+    await input.fill(stats.completion.toString());
+    await input.blur();
     await page.waitForTimeout(500); // Wait for auto-save
   }
 
   if (stats.difficulty !== undefined) {
-    await form.getByLabel('Skill Level').selectOption(stats.difficulty);
+    const select = getSelectByLabel(form, 'Skill Level');
+    await select.selectOption(stats.difficulty);
     await page.waitForTimeout(500); // Wait for auto-save
   }
 
   if (stats.score !== undefined) {
-    await form.getByLabel('Score').fill(stats.score.toString());
-    await form.getByLabel('Score').blur();
+    const input = getInputByLabel(form, 'Score');
+    await input.fill(stats.score.toString());
+    await input.blur();
     await page.waitForTimeout(500); // Wait for auto-save
   }
 
@@ -159,26 +185,30 @@ export async function enterStats(page: Page, stats: {
   }
 
   if (stats.longestStreak !== undefined) {
-    await form.getByLabel('Longest Streak').fill(stats.longestStreak.toString());
-    await form.getByLabel('Longest Streak').blur();
+    const input = getInputByLabel(form, 'Longest Streak');
+    await input.fill(stats.longestStreak.toString());
+    await input.blur();
     await page.waitForTimeout(500);
   }
 
   if (stats.notesHit !== undefined) {
-    await form.getByLabel('Notes Hit').fill(stats.notesHit.toString());
-    await form.getByLabel('Notes Hit').blur();
+    const input = getInputByLabel(form, 'Notes Hit');
+    await input.fill(stats.notesHit.toString());
+    await input.blur();
     await page.waitForTimeout(500);
   }
 
   if (stats.notesMissed !== undefined) {
-    await form.getByLabel('Notes Missed').fill(stats.notesMissed.toString());
-    await form.getByLabel('Notes Missed').blur();
+    const input = getInputByLabel(form, 'Notes Missed');
+    await input.fill(stats.notesMissed.toString());
+    await input.blur();
     await page.waitForTimeout(500);
   }
 
   if (stats.avgMultiplier !== undefined) {
-    await form.getByLabel('Avg. Multiplier').fill(stats.avgMultiplier.toString());
-    await form.getByLabel('Avg. Multiplier').blur();
+    const input = getInputByLabel(form, 'Avg. Multiplier');
+    await input.fill(stats.avgMultiplier.toString());
+    await input.blur();
     await page.waitForTimeout(500);
   }
 }
