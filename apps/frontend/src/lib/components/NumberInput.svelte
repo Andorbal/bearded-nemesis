@@ -30,17 +30,27 @@
     currentValue = value;
   });
 
-  async function handleBlur() {
-    if (saving) return;
+  // Attach blur event listener using DOM API
+  $effect(() => {
+    if (!inputRef) return;
 
-    saving = true;
-    try {
-      const numValue = currentValue === '' ? null : Number(currentValue);
-      await onSave(numValue);
-    } finally {
-      saving = false;
-    }
-  }
+    const handler = async () => {
+      if (saving) return;
+
+      saving = true;
+      try {
+        const numValue = currentValue === '' ? null : Number(currentValue);
+        await onSave(numValue);
+      } catch (error) {
+        console.error('Save error:', error);
+      } finally {
+        saving = false;
+      }
+    };
+
+    inputRef.addEventListener('blur', handler);
+    return () => inputRef.removeEventListener('blur', handler);
+  });
 
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'Enter' || e.key === 'Tab') {
@@ -69,8 +79,7 @@
       bind:this={inputRef}
       type="number"
       bind:value={currentValue}
-      onblur={handleBlur}
-      onkeydown={handleKeyDown}
+      on:keydown={handleKeyDown}
       {min}
       {max}
       {step}

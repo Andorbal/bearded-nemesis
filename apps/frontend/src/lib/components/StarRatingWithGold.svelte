@@ -49,7 +49,7 @@
       <button
         type="button"
         disabled={!interactive}
-        onclick={() => handleStarClick(index)}
+        onclick={async () => await handleStarClick(index)}
         class="text-2xl transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
         class:cursor-pointer={interactive}
         class:cursor-default={!interactive}
@@ -69,7 +69,7 @@
       <input
         type="checkbox"
         bind:checked={isGold}
-        onchange={handleGoldToggle}
+        onchange={async () => await handleGoldToggle()}
         disabled={!interactive}
         class="form-checkbox h-4 w-4 text-yellow-500 rounded"
       />

@@ -96,7 +96,7 @@
       </label>
       <select
         bind:value={difficulty}
-        onchange={handleDifficultyChange}
+        onchange={async (e) => await handleDifficultyChange(e)}
         class="input w-full"
       >
         {#each DIFFICULTIES as diff}
